@@ -1,3 +1,9 @@
+# MIT License
+# Copyright (c) 2025 818yaiba
+#
+# This file is part of NewSlot and is released under the MIT License.
+# See LICENSE file in the root directory for full license text.
+
 import sys
 import time
 
