@@ -150,9 +150,9 @@ class Slot:
     def _leveron(self):
         """遊技開始処理(仮)"""
         if self._bet in self._validbet:
-            self._reel[0].reelstart()
-            self._reel[1].reelstart()
-            self._reel[2].reelstart()
+            self._reel[0].reel_start()
+            self._reel[1].reel_start()
+            self._reel[2].reel_start()
         # if '遊技可能()?':
         #     if 'リールウェイト中()?':
         #         # 遊技開始予約処理()
