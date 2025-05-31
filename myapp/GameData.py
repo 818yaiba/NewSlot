@@ -1,5 +1,4 @@
 import os
-from typing import Optional
 
 # ゲームデータフォルダ名
 GAMEDATA_FOLDER_NAME: str = "assets"
@@ -25,33 +24,46 @@ GAME_TITLE: str = "test"
 # フォント
 FONT_WANPAKURUIKA = "わんぱくルイカ-０７"
 # フレームレート指定
-
-FRAMERATE: Optional[int] = None
-# より高品質な時間管理(CPU使用率増加)
-HIGHQUALITY_TIMECALC: bool = True
+FRAMERATE_LIMIT: int | None = None
 
 # 図柄画像幅
 SYMBOL_WIDTH: int = 150
 # 図柄画像高さ
 SYMBOL_HEIGHT: int = 70
 # リール図柄数
-SYMBOLARRAY_LENGTH: int = 21
+REEL_SYMBOL_LENGTH: int = 21
 # リール画像幅
 REEL_WIDTH: int = SYMBOL_WIDTH
 # リール画像高さ
-REEL_HEIGHT: int = SYMBOL_HEIGHT * SYMBOLARRAY_LENGTH
+REEL_HEIGHT: int = SYMBOL_HEIGHT * REEL_SYMBOL_LENGTH
 
-# リール描画用定数A (各リールの左右に確保する間隔)
-REELDRAW_CONST_A: int = int(SYMBOL_WIDTH // 6)
-# リール描画用定数B (各リールの上下に確保する間隔)
-REELDRAW_CONST_B: int = int(SYMBOL_WIDTH // 6)
-# リール描画用定数C (各リールの枠上/枠下の描画範囲)
-REELDRAW_CONST_C: int = int(SYMBOL_HEIGHT // 6)
+# 各リール間の間隔
+REEL_SPACE_BETWEEN_REELS: int = int(SYMBOL_WIDTH / 6)
+# 各リールの枠外の描画範囲
+REEL_OUTSIDE_DRAW_RANGE: int = int(SYMBOL_HEIGHT / 6)
+
+# リール描画共通オフセット
+REEL_DRAW_COMMON_OFFSET_X: int = int(SCREEN_WIDTH / 2 - SYMBOL_WIDTH / 2)
+REEL_DRAW_COMMON_OFFSET_Y: int = int(SCREEN_HEIGHT / 2 - SYMBOL_HEIGHT / 2)
+
+# リール描画固有オフセット
+REEL_DRAW_LEFT_OFFSET_X: int = (REEL_SPACE_BETWEEN_REELS + SYMBOL_WIDTH) * -1
+REEL_DRAW_CENTER_OFFSET_X: int = 0
+REEL_DRAW_RIGHT_OFFSET_X: int = REEL_SPACE_BETWEEN_REELS + SYMBOL_WIDTH
+
+# リール枠上端
+REEL_FRAME_TOP: int = int(
+    REEL_HEIGHT - SYMBOL_HEIGHT - REEL_OUTSIDE_DRAW_RANGE
+)
+# リール枠下端
+REEL_FRAME_BOTTOM: int = int(SYMBOL_HEIGHT * 2 + REEL_OUTSIDE_DRAW_RANGE)
+
 
 # UI描画用定数A (START/BET/REP/WAITランプの左右に確保する間隔)
-UIDRAW_CONST_A: int = int(REELDRAW_CONST_A // 1.5)
+UIDRAW_CONST_A: int = int(REEL_SPACE_BETWEEN_REELS // 1.5)
 # UI描画用定数B (START/BET/REP/WAITランプの上下に確保する間隔)
-UIDRAW_CONST_B: int = int(REELDRAW_CONST_A // 2)
+UIDRAW_CONST_B: int = int(REEL_SPACE_BETWEEN_REELS // 2)
+
 
 # リール回転速度[r/sec]
 REEL_SPEED: float = 0.8
@@ -80,12 +92,14 @@ COLORS: dict[str, tuple[int, int, int]] = {
     "PURPLE": (128, 0, 128),
 }
 
-# 最小有効BET数: プレイヤーが行える最小のBET数を定義します。
-# これにより、ゲーム内でのBETが1未満になることを防ぎます。
+# 有効BET数: 最小
 VALIDBET_MIN: int = 1
+# 有効BET数: 最大
+VALIDBET_MAX: int = 3
 
-# 最大有効BET数: プレイヤーが行える最大のBET数を定義します。
-# これにより、ゲーム内でのBETが3を超えることを防ぎます。
-VALIDBET_MAX: int = 3
-# 最大有効BET数
-VALIDBET_MAX: int = 3
+# リール位置: 上段
+REEL_POSITION_TOP: int = 0
+# リール位置: 中段
+REEL_POSITION_MIDDLE: int = 1
+# リール位置: 下段
+REEL_POSITION_BOTTOM: int = 2
