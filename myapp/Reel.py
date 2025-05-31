@@ -1,7 +1,6 @@
 import cv2
-from cv2.typing import MatLike
-
 import GameData
+from cv2.typing import MatLike
 from Symbol import Symbol
 
 
@@ -47,16 +46,16 @@ class Reel:
 
         self._symbolarray: list[Symbol] = symbolarray
         if not len(self._symbolarray) == GameData.SYMBOLARRAY_LENGTH:
-            raise Exception('リール図柄数が既定値と一致しません')
+            raise Exception("リール図柄数が既定値と一致しません")
 
         self._reelimage: MatLike = self._get_reelimage()
 
         image_width = self._reelimage.shape[1]
         image_height = self._reelimage.shape[0]
         if not image_width == GameData.REEL_WIDTH:
-            raise Exception('リール画像の幅が既定値と一致しません')
+            raise Exception("リール画像の幅が既定値と一致しません")
         if not image_height == GameData.REEL_HEIGHT:
-            raise Exception('リール画像の高さが既定値と一致しません')
+            raise Exception("リール画像の高さが既定値と一致しません")
 
         self._currentcoord: float = 0.0
         self._currentsymbol: list[Symbol] = self._get_currentsymbol()
@@ -78,7 +77,7 @@ class Reel:
             リール画像
         """
         if not self._symbolarray:
-            raise ValueError('リール配列が空です。画像を生成できません。')
+            raise ValueError("リール配列が空です。画像を生成できません。")
 
         reelimage_tmp = self._symbolarray[0].image
         for symbol in self._symbolarray[1:]:
@@ -153,7 +152,7 @@ class Reel:
             targetsymbolindex_middle = targetsymbolindex_upper - 1
         else:
             raise ValueError(
-                f'targetposition の値が不正です: {targetposition}'
+                f"targetposition の値が不正です: {targetposition}"
             )
 
         # リール図柄数
@@ -193,16 +192,16 @@ class Reel:
         """
         if not 0 <= targetsymbolindex:
             raise Exception(
-                '目標停止図柄のインデックスが不正です (負の値は指定できません)'
+                "目標停止図柄のインデックスが不正です (負の値は指定できません)"
             )
         elif not targetsymbolindex <= GameData.SYMBOLARRAY_LENGTH:
             raise Exception(
-                '目標停止図柄のインデックスが不正です (リール配列の範囲外です)'
+                "目標停止図柄のインデックスが不正です (リール配列の範囲外です)"
             )
         else:
             if targetposition not in [0, 1, 2]:
                 raise Exception(
-                    '目標停止位置が不正です (0:上段, 1:中段, 2:下段)'
+                    "目標停止位置が不正です (0:上段, 1:中段, 2:下段)"
                 )
 
         # リール目標表示図柄を設定
