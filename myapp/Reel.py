@@ -13,202 +13,186 @@ class Reel:
         リールID
     name : str
         リール名
-    symbolarray : list[Symbol]
+    reel_symbol : list[Symbol]
         リール配列
-    reelimage : MatLike
+    reel_image : MatLike
         リール画像
-    currentcoord : float
+    current_coord : float
         リール現在座標
-    currentsymbol : list[Symbol]
+    current_symbol : list[Symbol]
         現在表示中の図柄
-    targetsymbol : list[Symbol]
-        目標表示図柄
-    rotate : bool
+    target_symbol : list[Symbol]
+        目標図柄
+    rotate_instruction : bool
         リール回転状態
-    stop : bool
+    stop_instruction : bool
         リール停止指示状態
     """
 
     _Id: int = 0
 
-    def __init__(self, name: str, symbolarray: list[Symbol]):
+    def __init__(self, name: str, reel_symbol: list[Symbol]) -> None:
         """
         Parameters
         ----------
         name : str
             リール名
-        symbolarray: list[Symbol]
+        reel_symbol: list[Symbol]
             リール配列
         """
         self._id: int = Reel._Id
         Reel._Id += 1
         self._name: str = name
 
-        self._symbolarray: list[Symbol] = symbolarray
-        if not len(self._symbolarray) == GameData.SYMBOLARRAY_LENGTH:
-            raise Exception("リール図柄数が既定値と一致しません")
+        if len(reel_symbol) != GameData.REEL_SYMBOL_LENGTH:
+            raise ValueError(
+                "指定されたリール配列の図柄数が既定のリール図柄数と一致しません"
+            )
+        self._reel_symbol: list[Symbol] = reel_symbol
 
-        self._reelimage: MatLike = self._get_reelimage()
+        self._reel_image: MatLike = self._get_reel_image(self._reel_symbol)
+        if self._reel_image.shape[1] != GameData.REEL_WIDTH:
+            raise ValueError("リール画像の幅が既定値と一致しません")
+        if self._reel_image.shape[0] != GameData.REEL_HEIGHT:
+            raise ValueError("リール画像の高さが既定値と一致しません")
 
-        image_width = self._reelimage.shape[1]
-        image_height = self._reelimage.shape[0]
-        if not image_width == GameData.REEL_WIDTH:
-            raise Exception("リール画像の幅が既定値と一致しません")
-        if not image_height == GameData.REEL_HEIGHT:
-            raise Exception("リール画像の高さが既定値と一致しません")
+        self._current_coord: float = 0.0
+        self._current_symbol: list[Symbol] = self._get_current_symbol()
 
-        self._currentcoord: float = 0.0
-        self._currentsymbol: list[Symbol] = self._get_currentsymbol()
-        self._targetsymbol: list[Symbol] | list[None] = [None, None, None]
-        self._rotate: bool = False
-        self._stop: bool = True
+        self._target_symbol: list[Symbol] | list[None] = [None, None, None]
 
-    def _get_reelimage(self) -> MatLike:
+        self._rotate_instruction: bool = False
+        self._stop_instruction: bool = True
+
+    def _get_reel_image(self, symbol_array: list[Symbol]) -> MatLike:
         """リール画像を生成して返す
 
         Parameters
         ----------
-        symbolarray: list[Symbol]
+        symbol_array: list[Symbol]
             リール配列
 
         Returns
         -------
-        reelimage: MatLike
+        reel_image: MatLike
             リール画像
         """
-        if not self._symbolarray:
-            raise ValueError("リール配列が空です。画像を生成できません。")
+        reel_image_tmp = symbol_array[0].image
+        for symbol in symbol_array[1:]:
+            reel_image_tmp = cv2.vconcat([reel_image_tmp, symbol.image])
 
-        reelimage_tmp = self._symbolarray[0].image
-        for symbol in self._symbolarray[1:]:
-            # 図柄画像を縦方向に結合していく
-            reelimage_tmp = cv2.vconcat([reelimage_tmp, symbol.image])
+        reel_image = reel_image_tmp
 
-        return reelimage_tmp
+        return reel_image
 
-    def _get_currentsymbol(self) -> list[Symbol]:
-        """現在表示中の図柄を取得して返す
+    def _get_current_symbol(self) -> list[Symbol]:
+        """現在リール上にある図柄を取得し、現在表示中の図柄として返す
 
         Returns
         -------
-        currentsymbol : list[Symbol]
+        current_symbol : list[Symbol]
             現在表示中の図柄
         """
         # 図柄1つ分の高さ
-        symbol_heighteight = GameData.SYMBOL_HEIGHT
-        # リール図柄数
-        symbolarray_length = GameData.SYMBOLARRAY_LENGTH
+        symbol_height = GameData.SYMBOL_HEIGHT
 
         # 上段/中段/下段に表示されている図柄のインデックスを算出
-        currentsymbolindex_upper = int(
-            self._currentcoord // symbol_heighteight
-        )
-        currentsymbolindex_middle = currentsymbolindex_upper - 1
-        currentsymbolindex_lower = currentsymbolindex_middle - 1
+        current_symbol_index_top = int(self._current_coord // symbol_height)
+        current_symbol_index_middle = current_symbol_index_top - 1
+        current_symbol_index_bottom = current_symbol_index_middle - 1
+
+        # リール図柄数
+        reel_symbol_length = GameData.REEL_SYMBOL_LENGTH
         # リールの1周分を考慮して補正を行う
-        if currentsymbolindex_middle < 0:
-            currentsymbolindex_middle += symbolarray_length
-        if currentsymbolindex_lower < 0:
-            currentsymbolindex_lower += symbolarray_length
+        if current_symbol_index_middle < 0:
+            current_symbol_index_middle += reel_symbol_length
+        if current_symbol_index_bottom < 0:
+            current_symbol_index_bottom += reel_symbol_length
 
-        # 図柄のインデックスから図柄オブジェクトを取得
-        currentsymbol_upper = self._symbolarray[currentsymbolindex_upper]
-        currentsymbol_middle = self._symbolarray[currentsymbolindex_middle]
-        currentsymbol_lower = self._symbolarray[currentsymbolindex_lower]
-
-        # 結果返却用リスト
-        currentsymbol = [
-            currentsymbol_upper,
-            currentsymbol_middle,
-            currentsymbol_lower,
+        # 図柄のインデックスからオブジェクト取得
+        current_symbol: list[Symbol] = [
+            self._reel_symbol[current_symbol_index_top],
+            self._reel_symbol[current_symbol_index_middle],
+            self._reel_symbol[current_symbol_index_bottom],
         ]
 
-        return currentsymbol
+        return current_symbol
 
-    def _set_targetsymbol(self, targetsymbolindex: int, targetposition: int):
+    def _get_target_symbol(
+        self, target_symbol_index: int, target_stop_position: int
+    ) -> list[Symbol]:
         """リール目標表示図柄を設定
 
         Parameters
         ----------
-        targetsymbolindex : int
-            目標停止図柄のインデックス
-        targetposition : int
-            目標停止位置 (0:上段, 1:中段, 2:下段)
+        target_symbol_index : int
+            目標図柄のインデックス
+        target_stop_position : int
+            目標停止位置
         """
-        if targetposition == 0:
-            # 上段
-            targetsymbolindex_upper = targetsymbolindex
-            targetsymbolindex_middle = targetsymbolindex_upper - 1
-            targetsymbolindex_lower = targetsymbolindex_middle - 1
-        elif targetposition == 1:
-            # 中段
-            targetsymbolindex_middle = targetsymbolindex
-            targetsymbolindex_upper = targetsymbolindex_middle + 1
-            targetsymbolindex_lower = targetsymbolindex_middle - 1
-        elif targetposition == 2:
-            # 下段
-            targetsymbolindex_lower = targetsymbolindex
-            targetsymbolindex_upper = targetsymbolindex_lower + 2
-            targetsymbolindex_middle = targetsymbolindex_upper - 1
-        else:
+        if target_symbol_index < 0:
+            raise ValueError("目標図柄のインデックスに負の値は指定できません")
+        if GameData.REEL_SYMBOL_LENGTH < target_symbol_index:
             raise ValueError(
-                f"targetposition の値が不正です: {targetposition}"
+                "目標図柄のインデックスがリール配列の図柄数を超えています"
             )
+        if target_stop_position == GameData.REEL_POSITION_TOP:
+            target_symbol_index_top = target_symbol_index
+            target_symbol_index_middle = target_symbol_index_top - 1
+            target_symbol_index_bottom = target_symbol_index_middle - 1
+        elif target_stop_position == GameData.REEL_POSITION_MIDDLE:
+            target_symbol_index_middle = target_symbol_index
+            target_symbol_index_top = target_symbol_index_middle + 1
+            target_symbol_index_bottom = target_symbol_index_middle - 1
+        elif target_stop_position == GameData.REEL_POSITION_BOTTOM:
+            target_symbol_index_bottom = target_symbol_index
+            target_symbol_index_top = target_symbol_index_bottom + 2
+            target_symbol_index_middle = target_symbol_index_top - 1
+        else:
+            raise ValueError("目標停止位置の値が不正です")
 
         # リール図柄数
-        symbolarray_length = GameData.SYMBOLARRAY_LENGTH
+        reel_symbol_length = GameData.REEL_SYMBOL_LENGTH
 
         # 1周分の補正
-        targetsymbolindex_upper %= symbolarray_length
-        targetsymbolindex_middle %= symbolarray_length
-        targetsymbolindex_lower %= symbolarray_length
+        target_symbol_index_top %= reel_symbol_length
+        target_symbol_index_middle %= reel_symbol_length
+        target_symbol_index_bottom %= reel_symbol_length
 
         # 図柄のインデックスからオブジェクト取得
-        targetsymbol = [
-            self._symbolarray[targetsymbolindex_upper],
-            self._symbolarray[targetsymbolindex_middle],
-            self._symbolarray[targetsymbolindex_lower],
+        target_symbol: list[Symbol] = [
+            self._reel_symbol[target_symbol_index_top],
+            self._reel_symbol[target_symbol_index_middle],
+            self._reel_symbol[target_symbol_index_bottom],
         ]
 
-        self._targetsymbol = targetsymbol
+        return target_symbol
 
-    def reelstart(self):
+    def reel_start(self) -> None:
         """リールの回転を開始する"""
-        # リール回転状態
-        self._rotate = True
+        self._targetsymbol = [None, None, None]
+        self._rotate_instruction = True
+        self._stop_instruction = False
 
-        # リール停止指示状態
-        self._stop = False
-
-    def reelstop(self, targetsymbolindex: int, targetposition: int):
+    def reel_stop(
+        self, target_symbol_index: int, target_stop_position: int
+    ) -> None:
         """リール停止指示を行う
 
         Parameters
         ----------
-        targetsymbolindex : int
-            目標停止図柄のインデックス
-        targetposition : int
-            目標停止位置 (0:上段, 1:中段, 2:下段)
+        target_symbol_index : int
+            目標図柄のインデックス
+        target_stop_position : int
+            目標停止位置
         """
-        if not 0 <= targetsymbolindex:
-            raise Exception(
-                "目標停止図柄のインデックスが不正です (負の値は指定できません)"
-            )
-        elif not targetsymbolindex <= GameData.SYMBOLARRAY_LENGTH:
-            raise Exception(
-                "目標停止図柄のインデックスが不正です (リール配列の範囲外です)"
-            )
-        else:
-            if targetposition not in [0, 1, 2]:
-                raise Exception(
-                    "目標停止位置が不正です (0:上段, 1:中段, 2:下段)"
-                )
-
         # リール目標表示図柄を設定
-        self._set_targetsymbol(targetsymbolindex, targetposition)
+        self._target_symbol = self._get_target_symbol(
+            target_symbol_index, target_stop_position
+        )
 
         # リール停止指示
-        self._stop = True
+        self._stop_instruction = True
 
     def update(self, dt: float):
         """リール状態を更新する
@@ -219,25 +203,25 @@ class Reel:
             前回からの経過時間
         """
         # 回転中の場合
-        if self._rotate:
+        if self._rotate_instruction:
             # リール画像高さ
-            reel_heighteight = GameData.REEL_HEIGHT
+            reel_height = GameData.REEL_HEIGHT
 
             # 前回からの経過時間から現在座標を計算
-            self._currentcoord += (reel_heighteight / GameData.REEL_SPEED) * dt
+            self._current_coord += (reel_height / GameData.REEL_SPEED) * dt
 
             # 現在座標がリール端を超えている場合、補正する
-            if self._currentcoord >= reel_heighteight:
-                self._currentcoord %= reel_heighteight
+            if self._current_coord >= reel_height:
+                self._current_coord %= reel_height
 
             # 現在表示中の図柄を取得
-            self._currentsymbol = self._get_currentsymbol()
+            self._current_symbol = self._get_current_symbol()
 
             # 停止指示がある場合
-            if self._stop:
+            if self._stop_instruction:
                 # 現在表示中の図柄 = 停止目標図柄であれば回転停止
-                if self._currentsymbol == self._targetsymbol:
-                    self._rotate = False
+                if self._current_symbol == self._targetsymbol:
+                    self._rotate_instruction = False
 
     @property
     def id(self) -> int:
@@ -248,29 +232,29 @@ class Reel:
         return self._name
 
     @property
-    def symbolarray(self) -> list[Symbol]:
-        return self._symbolarray
+    def reel_symbol(self) -> list[Symbol]:
+        return self._reel_symbol
 
     @property
-    def reelimage(self) -> MatLike:
-        return self._reelimage
+    def reel_image(self) -> MatLike:
+        return self._reel_image
 
     @property
-    def currentcoord(self) -> float:
-        return self._currentcoord
+    def current_coord(self) -> float:
+        return self._current_coord
 
     @property
-    def currentsymbol(self) -> list[Symbol]:
-        return self._currentsymbol
+    def current_symbol(self) -> list[Symbol]:
+        return self._current_symbol
 
     @property
-    def targetsymbol(self) -> list[Symbol] | list[None]:
-        return self._targetsymbol
+    def target_symbol(self) -> list[Symbol] | list[None]:
+        return self._target_symbol
 
     @property
-    def rotate(self) -> bool:
-        return self._rotate
+    def rotate_instruction(self) -> bool:
+        return self._rotate_instruction
 
     @property
-    def stop(self) -> bool:
-        return self._stop
+    def stop_instruction(self) -> bool:
+        return self._stop_instruction
