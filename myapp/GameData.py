@@ -1,16 +1,16 @@
 import os
 
-# ゲーム実行ディレクトリ
-GAME_DIRECTORY: str = os.path.dirname(__file__)
-
 # ゲームデータフォルダ名
 GAMEDATA_FOLDER_NAME: str = "assets"
 # ゲーム画像フォルダ名
 IMAGE_FOLDER_NAME: str = "images"
+
+# 現在のスクリプトファイルのディレクトリを取得
+current_dir = os.path.dirname(os.path.abspath(__file__))
+# 1つ上の階層のディレクトリパスを取得
+parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
 # ゲーム画像ディレクトリ
-IMAGE_DIRECTORY: str = os.path.join(
-    GAME_DIRECTORY, GAMEDATA_FOLDER_NAME, IMAGE_FOLDER_NAME
-)
+IMAGE_DIRECTORY: str = os.path.join(parent_dir, GAMEDATA_FOLDER_NAME, IMAGE_FOLDER_NAME)
 
 # ゲーム画面幅
 SCREEN_WIDTH: int = 800

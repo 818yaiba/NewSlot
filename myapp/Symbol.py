@@ -1,9 +1,8 @@
 import os
 
 import cv2
-from cv2.typing import MatLike
-
 import GameData
+from cv2.typing import MatLike
 
 
 class Symbol:
@@ -42,6 +41,11 @@ class Symbol:
         # 図柄画像読み込み
         imagefile_path = os.path.join(GameData.IMAGE_DIRECTORY, filename)
         self._image = cv2.imread(imagefile_path)
+
+        if self._image is None:  # 画像が読み込めなかった場合
+            raise FileNotFoundError(
+                f"図柄画像ファイルが見つかりません: {imagefile_path}"
+            )
 
         # 図柄画像チェック
         if self._image.shape[1] != GameData.SYMBOL_WIDTH:

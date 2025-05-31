@@ -5,13 +5,13 @@ from Symbol import Symbol
 STATE_NORMAL = State("通常")
 
 # 図柄
-redseven = Symbol("赤７", "redseven_1.png")
-blueseven = Symbol("青７", "blueseven_1.png")
-bar = Symbol("ＢＡＲ", "bar_1.png")
-cherry = Symbol("チェリー", "cherry_1.png")
-watermelon = Symbol("スイカ", "watermelon_1.png")
-bell = Symbol("ベル", "bell_1.png")
-replay = Symbol("リプレイ", "replay_1.png")
+redseven = Symbol("赤７", "RedSeven.png")
+blueseven = Symbol("青７", "BlueSeven.png")
+bar = Symbol("ＢＡＲ", "BAR.png")
+cherry = Symbol("チェリー", "Cherry.png")
+watermelon = Symbol("スイカ", "WaterMelon.png")
+bell = Symbol("ベル", "Bell_A.png")
+replay = Symbol("リプレイ", "Replay_A.png")
 
 # 左リール配列
 REEL_SYMBOLPATTERN_L = [
