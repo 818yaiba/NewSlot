@@ -5,87 +5,87 @@ from Symbol import Symbol
 STATE_NORMAL = State("通常")
 
 # 図柄
-redseven = Symbol("赤７", "RedSeven.png")
-blueseven = Symbol("青７", "BlueSeven.png")
-bar = Symbol("ＢＡＲ", "BAR.png")
-cherry = Symbol("チェリー", "Cherry.png")
-watermelon = Symbol("スイカ", "WaterMelon.png")
-bell = Symbol("ベル", "Bell_A.png")
-replay = Symbol("リプレイ", "Replay_A.png")
+SYMBOL_REDSEVEN = Symbol("赤７", "RedSeven.png")
+SYMBOL_BLUESEVEN = Symbol("青７", "BlueSeven.png")
+SYMBOL_BAR = Symbol("ＢＡＲ", "BAR.png")
+SYMBOL_CHERRY = Symbol("チェリー", "Cherry.png")
+SYMBOL_WATERMELON = Symbol("スイカ", "WaterMelon.png")
+SYMBOL_BELL_A = Symbol("ベル", "Bell_A.png")
+SYMBOL_REPLAY_A = Symbol("リプレイ", "Replay_A.png")
 
 # 左リール配列
 REEL_SYMBOLPATTERN_L = [
-    watermelon,
-    cherry,
-    redseven,
-    bell,
-    replay,
-    watermelon,
-    blueseven,
-    bell,
-    replay,
-    watermelon,
-    redseven,
-    cherry,
-    bar,
-    bell,
-    replay,
-    watermelon,
-    blueseven,
-    blueseven,
-    blueseven,
-    bell,
-    replay,
+    SYMBOL_WATERMELON,
+    SYMBOL_CHERRY,
+    SYMBOL_REDSEVEN,
+    SYMBOL_BELL_A,
+    SYMBOL_REPLAY_A,
+    SYMBOL_WATERMELON,
+    SYMBOL_BLUESEVEN,
+    SYMBOL_BELL_A,
+    SYMBOL_REPLAY_A,
+    SYMBOL_WATERMELON,
+    SYMBOL_REDSEVEN,
+    SYMBOL_CHERRY,
+    SYMBOL_BAR,
+    SYMBOL_BELL_A,
+    SYMBOL_REPLAY_A,
+    SYMBOL_WATERMELON,
+    SYMBOL_BLUESEVEN,
+    SYMBOL_BLUESEVEN,
+    SYMBOL_BLUESEVEN,
+    SYMBOL_BELL_A,
+    SYMBOL_REPLAY_A,
 ]
 
 # 中リール配列
 REEL_SYMBOLPATTERN_C = [
-    cherry,
-    watermelon,
-    redseven,
-    replay,
-    bell,
-    cherry,
-    watermelon,
-    cherry,
-    replay,
-    bell,
-    cherry,
-    blueseven,
-    replay,
-    bell,
-    bar,
-    cherry,
-    replay,
-    bell,
-    cherry,
-    replay,
-    bell,
+    SYMBOL_CHERRY,
+    SYMBOL_WATERMELON,
+    SYMBOL_REDSEVEN,
+    SYMBOL_REPLAY_A,
+    SYMBOL_BELL_A,
+    SYMBOL_CHERRY,
+    SYMBOL_WATERMELON,
+    SYMBOL_CHERRY,
+    SYMBOL_REPLAY_A,
+    SYMBOL_BELL_A,
+    SYMBOL_CHERRY,
+    SYMBOL_BLUESEVEN,
+    SYMBOL_REPLAY_A,
+    SYMBOL_BELL_A,
+    SYMBOL_BAR,
+    SYMBOL_CHERRY,
+    SYMBOL_REPLAY_A,
+    SYMBOL_BELL_A,
+    SYMBOL_CHERRY,
+    SYMBOL_REPLAY_A,
+    SYMBOL_BELL_A,
 ]
 
 # 右リール配列
 REEL_SYMBOLPATTERN_R = [
-    replay,
-    cherry,
-    redseven,
-    watermelon,
-    bell,
-    replay,
-    bar,
-    watermelon,
-    bell,
-    replay,
-    cherry,
-    watermelon,
-    bell,
-    replay,
-    blueseven,
-    watermelon,
-    bell,
-    replay,
-    cherry,
-    watermelon,
-    bell,
+    SYMBOL_REPLAY_A,
+    SYMBOL_CHERRY,
+    SYMBOL_REDSEVEN,
+    SYMBOL_WATERMELON,
+    SYMBOL_BELL_A,
+    SYMBOL_REPLAY_A,
+    SYMBOL_BAR,
+    SYMBOL_WATERMELON,
+    SYMBOL_BELL_A,
+    SYMBOL_REPLAY_A,
+    SYMBOL_CHERRY,
+    SYMBOL_WATERMELON,
+    SYMBOL_BELL_A,
+    SYMBOL_REPLAY_A,
+    SYMBOL_BLUESEVEN,
+    SYMBOL_WATERMELON,
+    SYMBOL_BELL_A,
+    SYMBOL_REPLAY_A,
+    SYMBOL_CHERRY,
+    SYMBOL_WATERMELON,
+    SYMBOL_BELL_A,
 ]
 
 # 有効ライン
