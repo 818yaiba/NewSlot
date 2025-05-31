@@ -1,15 +1,13 @@
 import sys
-import time
 
 import GameData
 import pygame
-from cv2.typing import MatLike
+import utils
 from Slot import Slot
 
 
 class Game:
-    """
-    ゲーム
+    """ゲーム
 
     Attributes
     ----------
@@ -32,64 +30,51 @@ class Game:
         Game._Id += 1
         self._name: str = name
 
-        # ゲーム画面幅, 高さ
         self._screen_width: int = GameData.SCREEN_WIDTH
         self._screen_height: int = GameData.SCREEN_HEIGHT
 
-        # pygame
         pygame.init()
         self._screen = pygame.display.set_mode(
             (self._screen_width, self._screen_height)
         )
         pygame.display.set_caption(self._name)
         self._clock = pygame.time.Clock()
-        self._previous_time: float = time.perf_counter()
-        self._timedelta: float = time.perf_counter() - self._previous_time
 
         self._systemfont_name = GameData.FONT_WANPAKURUIKA
         self._system_font = pygame.font.SysFont(self._systemfont_name, 16)
 
-        # フレームレート指定
-        self._framerate: int | None = GameData.FRAMERATE
-        # より高品質な時間管理のオプション
-        self._highquality_timecalc: bool = GameData.HIGHQUALITY_TIMECALC
+        self._framerate_limit: int | None = GameData.FRAMERATE_LIMIT
 
         # slot
         self._slot = Slot()
 
         # リール描画用リール画像 (OpenCV → pygame)
-        self._reelimg_l = self._convert_cv2_to_pg(self._slot.reel[0].reelimage)
-        self._reelimg_c = self._convert_cv2_to_pg(self._slot.reel[1].reelimage)
-        self._reelimg_r = self._convert_cv2_to_pg(self._slot.reel[2].reelimage)
+        self._left_reel_image = utils.cv2_to_pygame_surface(
+            self._slot.reel[0].reel_image
+        )
+        self._center_reel_image = utils.cv2_to_pygame_surface(
+            self._slot.reel[1].reel_image
+        )
+        self._right_reel_image = utils.cv2_to_pygame_surface(
+            self._slot.reel[2].reel_image
+        )
 
-    def _convert_cv2_to_pg(self, cv2_image: MatLike) -> pygame.Surface:
-        """OpenCVの画像をPygame用に変換"""
-        # BGR(OpenCV) → RGB(pygame)
-        img = cv2_image[:, :, ::-1]
-        # 高さ, 幅, 色数(OpenCV) → 幅, 高さ(pygame)
-        shape = img.shape[1::-1]
-        # image(pygame)
-        img = pygame.image.frombuffer(img.tobytes(), shape, "RGB").convert()
-
-        return img
-
-    def game_quit(self):
+    def game_quit(self) -> None:
         """ゲームを終了する"""
         pygame.quit()
         sys.exit()
 
-    def _gameevent_update(self):
+    def _gameevent_update(self) -> None:
         """イベントを検知し更新する"""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                # ゲーム終了
                 self.game_quit()
             elif event.type == pygame.KEYDOWN:
                 self._keydown_event(event)
             elif event.type == pygame.KEYUP:
                 self._keyup_event(event)
 
-    def _keydown_event(self, event: pygame.event.Event):
+    def _keydown_event(self, event: pygame.event.Event) -> None:
         """コメント"""
         if event.key == pygame.K_1:
             # ONEBET BUTTON
@@ -111,7 +96,7 @@ class Game:
                 # RIGHTREEL-STOP BUTTON
                 self._slot.rightreelstop_keydown()
 
-    def _keyup_event(self, event: pygame.event.Event):
+    def _keyup_event(self, event: pygame.event.Event) -> None:
         """コメント"""
         if event.key == pygame.K_1:
             # ONEBET BUTTON
@@ -133,359 +118,185 @@ class Game:
                 # RIGHTREEL-STOP BUTTON
                 self._slot.rightreelstop_keyup()
 
-    def _gameclock_update(self):
-        """clockを更新する"""
-        if self._highquality_timecalc is True:
-            # 高品質な時間管理が有効の場合、tick_busy_loop()を使用する
-            if self._framerate is not None:
-                # フレームレート指定がある場合、フレームレート制限を行う
-                self._clock.tick_busy_loop(self._framerate)
-            else:
-                self._clock.tick_busy_loop()
+    def _clock_update(self) -> float:
+        """clockを更新する
+
+        Returns
+        -------
+        ticktime_sec: float
+            前回tick命令実行からの経過時間[sec]
+        """
+        if GameData.FRAMERATE_LIMIT is None:
+            ticktime_msec = self._clock.tick_busy_loop()
         else:
-            if self._framerate is not None:
-                # フレームレート指定がある場合、フレームレート制限を行う
-                self._clock.tick(self._framerate)
-            else:
-                self._clock.tick()
+            ticktime_msec = self._clock.tick_busy_loop(
+                GameData.FRAMERATE_LIMIT
+            )
 
-    def _timedelta_update(self):
-        """前回からの経過時間を更新する"""
-        self._timedelta = time.perf_counter() - self._previous_time
-        self._previous_time = time.perf_counter()
+        ticktime_sec = ticktime_msec / 1000.0
 
-    def _game_update(self):
+        return ticktime_sec
+
+    def _get_ticktime(self) -> float:
+        """前回tick命令実行からの経過時間を返す
+
+        Returns
+        -------
+        timedelta_sec: float
+            前回tick命令実行からの経過時間[sec]
+        """
+        timedelta_msec = self._clock.get_time()
+
+        timedelta_sec = timedelta_msec / 1000.0
+
+        return timedelta_sec
+
+    def _game_update(self) -> None:
         """ゲーム状態を更新する"""
-        self._slot.update(self._timedelta)
+        timedelta_sec = self._get_ticktime()
+        self._slot.update(timedelta_sec)
 
-    def _gamescreen_update(self):
+    def _screen_update(self):
         """Surfaceオブジェクトを更新する"""
         self._screen.fill(color=GameData.COLORS["BLACK"])
-        self._gamereel_draw()
-        self._gameui_draw()
+        self._screen_reel_draw()
+        self._screen_ui_draw()
 
-    def _gamereel_draw(self):
-        """リールを描画する"""
-        self._left_reel_draw()
-        self._center_reel_draw()
-        self._right_reel_draw()
-        self._upper_reelcover_draw()
-        self._lower_reelcover_draw()
+    def _draw_reel(
+        self,
+        reel_image_surface: pygame.Surface,
+        current_coord: float,
+        reel_draw_offset_x: int,
+    ) -> None:
+        """リール描画
 
-    def _left_reel_draw(self):
+        Parameters
+        ----------
+        reel_image_surface : pygame.Surface
+            リール画像
+        current_coord : float
+            現在座標
+        reel_draw_offset_x : int
+            X方向のオフセット
+        """
+        reel_height = GameData.REEL_HEIGHT
+
+        common_offset_X = GameData.REEL_DRAW_COMMON_OFFSET_X
+        common_offset_Y = GameData.REEL_DRAW_COMMON_OFFSET_Y
+        reel_frame_top = GameData.REEL_FRAME_TOP
+        reel_frame_bottom = GameData.REEL_FRAME_BOTTOM
+
+        if 0 <= current_coord <= reel_frame_bottom:
+            self._screen.blit(
+                reel_image_surface,
+                (
+                    common_offset_X + reel_draw_offset_x,
+                    common_offset_Y + current_coord - reel_height * 1,
+                ),
+            )
+            self._screen.blit(
+                reel_image_surface,
+                (
+                    common_offset_X + reel_draw_offset_x,
+                    common_offset_Y + current_coord - reel_height * 0,
+                ),
+            )
+        elif reel_frame_bottom < current_coord <= reel_frame_top:
+            self._screen.blit(
+                reel_image_surface,
+                (
+                    common_offset_X + reel_draw_offset_x,
+                    common_offset_Y + current_coord - reel_height * 1,
+                ),
+            )
+        else:
+            self._screen.blit(
+                reel_image_surface,
+                (
+                    common_offset_X + reel_draw_offset_x,
+                    common_offset_Y + current_coord - reel_height * 2,
+                ),
+            )
+            self._screen.blit(
+                reel_image_surface,
+                (
+                    common_offset_X + reel_draw_offset_x,
+                    common_offset_Y + current_coord - reel_height * 1,
+                ),
+            )
+
+    def _left_reel_draw(self) -> None:
         """左リールを描画する"""
-        # 左リール座標
-        currentcoord_leftreel = self._slot.reel[0].currentcoord
+        self._draw_reel(
+            self._left_reel_image,
+            self._slot.reel[0].current_coord,
+            GameData.REEL_DRAW_LEFT_OFFSET_X,
+        )
 
-        # ゲーム画面幅
-        screen_width = GameData.SCREEN_WIDTH
-        # ゲーム画面高さ
-        screen_height = GameData.SCREEN_HEIGHT
-        # リール画像(全体)の高さ
-        reel_height = GameData.REEL_HEIGHT
-        # リール画像(全体)の幅
-        symbol_width = GameData.SYMBOL_WIDTH
-        # 図柄1つ分の高さ
-        symbol_height = GameData.SYMBOL_HEIGHT
-
-        # リール描画用定数A (各リールの左右に確保する間隔)
-        reeldraw_const_a = GameData.REELDRAW_CONST_A
-        # リール描画用定数C (各リールの枠上/枠下の描画範囲)
-        reeldraw_const_c = GameData.REELDRAW_CONST_C
-
-        # リール描画
-        # 左リール
-        if 0 <= currentcoord_leftreel and currentcoord_leftreel <= (
-            symbol_height * 2 + reeldraw_const_c
-        ):
-            # 上側画像
-            self._screen.blit(
-                self._reelimg_l,
-                (
-                    screen_width / 2 - symbol_width * 3 / 2 - reeldraw_const_a,
-                    currentcoord_leftreel
-                    - reel_height
-                    + screen_height / 2
-                    - symbol_height / 2,
-                ),
-            )
-            # 下側画像
-            self._screen.blit(
-                self._reelimg_l,
-                (
-                    screen_width / 2 - symbol_width * 3 / 2 - reeldraw_const_a,
-                    currentcoord_leftreel
-                    + screen_height / 2
-                    - symbol_height / 2,
-                ),
-            )
-        elif (
-            symbol_height * 2 + reeldraw_const_c < currentcoord_leftreel
-            and currentcoord_leftreel
-            <= reel_height - symbol_height - reeldraw_const_c
-        ):
-            # 上側画像
-            self._screen.blit(
-                self._reelimg_l,
-                (
-                    screen_width / 2 - symbol_width * 3 / 2 - reeldraw_const_a,
-                    currentcoord_leftreel
-                    - reel_height
-                    + screen_height / 2
-                    - symbol_height / 2,
-                ),
-            )
-        else:
-            # 上側画像
-            self._screen.blit(
-                self._reelimg_l,
-                (
-                    screen_width / 2 - symbol_width * 3 / 2 - reeldraw_const_a,
-                    currentcoord_leftreel
-                    - reel_height * 2
-                    + screen_height / 2
-                    - symbol_height / 2,
-                ),
-            )
-            # 下側画像
-            self._screen.blit(
-                self._reelimg_l,
-                (
-                    screen_width / 2 - symbol_width * 3 / 2 - reeldraw_const_a,
-                    currentcoord_leftreel
-                    - reel_height
-                    + screen_height / 2
-                    - symbol_height / 2,
-                ),
-            )
-
-    def _center_reel_draw(self):
+    def _center_reel_draw(self) -> None:
         """中リールを描画する"""
-        # 中リール座標
-        currentcoord_centerreel = self._slot.reel[1].currentcoord
+        self._draw_reel(
+            self._center_reel_image,
+            self._slot.reel[1].current_coord,
+            GameData.REEL_DRAW_CENTER_OFFSET_X,
+        )
 
-        # ゲーム画面幅
-        screen_width = GameData.SCREEN_WIDTH
-        # ゲーム画面高さ
-        screen_height = GameData.SCREEN_HEIGHT
-        # リール画像(全体)の高さ
-        reel_height = GameData.REEL_HEIGHT
-        # リール画像(全体)の幅
-        symbol_width = GameData.SYMBOL_WIDTH
-        # 図柄1つ分の高さ
-        symbol_height = GameData.SYMBOL_HEIGHT
-
-        # リール描画用定数C (各リールの枠上/枠下の描画範囲)
-        reeldraw_const_c = GameData.REELDRAW_CONST_C
-
-        # リール描画
-        # 中リール
-        if 0 <= currentcoord_centerreel and currentcoord_centerreel <= (
-            symbol_height * 2 + reeldraw_const_c
-        ):
-            # 上側画像
-            self._screen.blit(
-                self._reelimg_c,
-                (
-                    screen_width / 2 - symbol_width / 2,
-                    currentcoord_centerreel
-                    - reel_height
-                    + screen_height / 2
-                    - symbol_height / 2,
-                ),
-            )
-            # 下側画像
-            self._screen.blit(
-                self._reelimg_c,
-                (
-                    screen_width / 2 - symbol_width / 2,
-                    currentcoord_centerreel
-                    + screen_height / 2
-                    - symbol_height / 2,
-                ),
-            )
-        elif (
-            symbol_height * 2 + reeldraw_const_c < currentcoord_centerreel
-            and currentcoord_centerreel
-            <= (reel_height - symbol_height - reeldraw_const_c)
-        ):
-            # 上側画像
-            self._screen.blit(
-                self._reelimg_c,
-                (
-                    screen_width / 2 - symbol_width / 2,
-                    currentcoord_centerreel
-                    - reel_height
-                    + screen_height / 2
-                    - symbol_height / 2,
-                ),
-            )
-        else:
-            # 上側画像
-            self._screen.blit(
-                self._reelimg_c,
-                (
-                    screen_width / 2 - symbol_width / 2,
-                    currentcoord_centerreel
-                    - reel_height * 2
-                    + screen_height / 2
-                    - symbol_height / 2,
-                ),
-            )
-            # 下側画像
-            self._screen.blit(
-                self._reelimg_c,
-                (
-                    screen_width / 2 - symbol_width / 2,
-                    currentcoord_centerreel
-                    - reel_height
-                    + screen_height / 2
-                    - symbol_height / 2,
-                ),
-            )
-
-    def _right_reel_draw(self):
+    def _right_reel_draw(self) -> None:
         """右リールを描画する"""
-        # 右リール座標
-        currentcoord_rightreel = self._slot.reel[2].currentcoord
+        self._draw_reel(
+            self._right_reel_image,
+            self._slot.reel[2].current_coord,
+            GameData.REEL_DRAW_RIGHT_OFFSET_X,
+        )
 
-        # ゲーム画面幅
-        screen_width = GameData.SCREEN_WIDTH
-        # ゲーム画面高さ
-        screen_height = GameData.SCREEN_HEIGHT
-        # リール画像(全体)の高さ
-        reel_height = GameData.REEL_HEIGHT
-        # リール画像(全体)の幅
-        symbol_width = GameData.SYMBOL_WIDTH
-        # 図柄1つ分の高さ
-        symbol_height = GameData.SYMBOL_HEIGHT
-
-        # リール描画用定数A (各リールの左右に確保する間隔)
-        reeldraw_const_a = GameData.REELDRAW_CONST_A
-        # リール描画用定数C (各リールの枠上/枠下の描画範囲)
-        reeldraw_const_c = GameData.REELDRAW_CONST_C
-
-        # リール描画
-        # 右リール
-        if 0 <= currentcoord_rightreel and currentcoord_rightreel <= (
-            symbol_height * 2 + reeldraw_const_c
-        ):
-            # 上側画像
-            self._screen.blit(
-                self._reelimg_r,
-                (
-                    screen_width / 2 + symbol_width / 2 + reeldraw_const_a,
-                    currentcoord_rightreel
-                    - reel_height
-                    + screen_height / 2
-                    - symbol_height / 2,
-                ),
-            )
-            # 下側画像
-            self._screen.blit(
-                self._reelimg_r,
-                (
-                    screen_width / 2 + symbol_width / 2 + reeldraw_const_a,
-                    currentcoord_rightreel
-                    + screen_height / 2
-                    - symbol_height / 2,
-                ),
-            )
-        elif (
-            symbol_height * 2 + reeldraw_const_c < currentcoord_rightreel
-            and currentcoord_rightreel
-            <= (reel_height - symbol_height - reeldraw_const_c)
-        ):
-            # 上側画像
-            self._screen.blit(
-                self._reelimg_r,
-                (
-                    screen_width / 2 + symbol_width / 2 + reeldraw_const_a,
-                    currentcoord_rightreel
-                    - reel_height
-                    + screen_height / 2
-                    - symbol_height / 2,
-                ),
-            )
-        else:
-            # 上側画像
-            self._screen.blit(
-                self._reelimg_r,
-                (
-                    screen_width / 2 + symbol_width / 2 + reeldraw_const_a,
-                    currentcoord_rightreel
-                    - reel_height * 2
-                    + screen_height / 2
-                    - symbol_height / 2,
-                ),
-            )
-            # 下側画像
-            self._screen.blit(
-                self._reelimg_r,
-                (
-                    screen_width / 2 + symbol_width / 2 + reeldraw_const_a,
-                    currentcoord_rightreel
-                    - reel_height
-                    + screen_height / 2
-                    - symbol_height / 2,
-                ),
-            )
-
-    def _upper_reelcover_draw(self):
+    def _upper_reelcover_draw(self) -> None:
         """リール上側を黒塗りする"""
-        # ゲーム画面幅
-        screen_width = GameData.SCREEN_WIDTH
-        # ゲーム画面高さ
-        screen_height = GameData.SCREEN_HEIGHT
-        # 図柄1つ分の高さ
-        symbol_height = GameData.SYMBOL_HEIGHT
-
-        # リール描画用定数C (各リールの枠上/枠下の描画範囲)
-        reeldraw_const_c = GameData.REELDRAW_CONST_C
-
         pygame.draw.rect(
             self._screen,
             GameData.COLORS["BLACK"],
             (
                 0,
                 0,
-                screen_width,
+                GameData.SCREEN_WIDTH,
                 int(
-                    screen_height / 2
-                    - symbol_height * 3 / 2
-                    - reeldraw_const_c
+                    GameData.SCREEN_HEIGHT / 2
+                    - GameData.SYMBOL_HEIGHT * 3 / 2
+                    - GameData.REEL_OUTSIDE_DRAW_RANGE
                 ),
             ),
         )
 
     def _lower_reelcover_draw(self):
         """リール下側を黒塗りする"""
-        # ゲーム画面幅
-        screen_width = GameData.SCREEN_WIDTH
-        # ゲーム画面高さ
-        screen_height = GameData.SCREEN_HEIGHT
-        # 図柄1つ分の高さ
-        symbol_height = GameData.SYMBOL_HEIGHT
-
-        # リール描画用定数C (各リールの枠上/枠下の描画範囲)
-        reeldraw_const_c = GameData.REELDRAW_CONST_C
-
         pygame.draw.rect(
             self._screen,
             GameData.COLORS["BLACK"],
             (
                 0,
                 int(
-                    screen_height / 2
-                    + symbol_height * 3 / 2
-                    + reeldraw_const_c
+                    GameData.SCREEN_HEIGHT / 2
+                    + GameData.SYMBOL_HEIGHT * 3 / 2
+                    + GameData.REEL_OUTSIDE_DRAW_RANGE
                 ),
-                screen_width,
-                screen_height,
+                GameData.SCREEN_WIDTH,
+                GameData.SCREEN_HEIGHT,
             ),
         )
 
-    def _gameui_draw(self):
+    def _screen_reel_draw(self) -> None:
+        """リールを描画する"""
+        # 左リールを描画
+        self._left_reel_draw()
+        # 中リールを描画
+        self._center_reel_draw()
+        # 右リールを描画
+        self._right_reel_draw()
+        # リール上側を黒塗りする
+        self._upper_reelcover_draw()
+        # リール下側を黒塗りする
+        self._lower_reelcover_draw()
+
+    def _screen_ui_draw(self):
         """UIを描画する"""
         self._ui_credit_draw()
         self._ui_payout_draw()
@@ -542,7 +353,7 @@ class Game:
         symbol_width = GameData.SYMBOL_WIDTH
 
         # リール描画用定数A (各リールの左右に確保する間隔)
-        reeldraw_const_a = GameData.REELDRAW_CONST_A
+        reeldraw_const_a = GameData.REEL_SPACE_BETWEEN_REELS
 
         # UI描画用定数A (START/BET/REP/WAITランプの左右に確保する間隔)
         uidraw_const_a = GameData.UIDRAW_CONST_A
@@ -579,7 +390,7 @@ class Game:
         symbol_width = GameData.SYMBOL_WIDTH
 
         # リール描画用定数A (各リールの左右に確保する間隔)
-        reeldraw_const_a = GameData.REELDRAW_CONST_A
+        reeldraw_const_a = GameData.REEL_SPACE_BETWEEN_REELS
 
         # UI描画用定数A (START/BET/REP/WAITランプの左右に確保する間隔)
         uidraw_const_a = GameData.UIDRAW_CONST_A
@@ -687,7 +498,7 @@ class Game:
             ),
         )
 
-    def _gamedisplay_update(self):
+    def _display_update(self):
         """displayオブジェクトを更新する"""
         pygame.display.update()
 
@@ -697,17 +508,14 @@ class Game:
             # イベントを検知し更新する
             self._gameevent_update()
 
-            # 前回からの経過時間を更新する
-            self._timedelta_update()
-
             # ゲーム状態を更新する
             self._game_update()
 
             # Surfaceオブジェクトを更新する
-            self._gameclock_update()
-
-            # Surfaceオブジェクトを更新する
-            self._gamescreen_update()
+            self._screen_update()
 
             # displayオブジェクトを更新する
-            self._gamedisplay_update()
+            self._display_update()
+
+            # clockオブジェクトを更新する
+            self._clock_update()
