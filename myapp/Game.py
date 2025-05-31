@@ -1,10 +1,9 @@
 import sys
 import time
 
+import GameData
 import pygame
 from cv2.typing import MatLike
-
-import GameData
 from Slot import Slot
 
 
@@ -161,7 +160,7 @@ class Game:
 
     def _gamescreen_update(self):
         """Surfaceオブジェクトを更新する"""
-        self._screen.fill(color=GameData.RGB_BLACK)
+        self._screen.fill(color=GameData.COLORS["BLACK"])
         self._gamereel_draw()
         self._gameui_draw()
 
@@ -215,12 +214,15 @@ class Game:
                 self._reelimg_l,
                 (
                     screen_width / 2 - symbol_width * 3 / 2 - reeldraw_const_a,
-                    currentcoord_leftreel + screen_height / 2 - symbol_height / 2,
+                    currentcoord_leftreel
+                    + screen_height / 2
+                    - symbol_height / 2,
                 ),
             )
         elif (
             symbol_height * 2 + reeldraw_const_c < currentcoord_leftreel
-            and currentcoord_leftreel <= reel_height - symbol_height - reeldraw_const_c
+            and currentcoord_leftreel
+            <= reel_height - symbol_height - reeldraw_const_c
         ):
             # 上側画像
             self._screen.blit(
@@ -297,7 +299,9 @@ class Game:
                 self._reelimg_c,
                 (
                     screen_width / 2 - symbol_width / 2,
-                    currentcoord_centerreel + screen_height / 2 - symbol_height / 2,
+                    currentcoord_centerreel
+                    + screen_height / 2
+                    - symbol_height / 2,
                 ),
             )
         elif (
@@ -382,7 +386,9 @@ class Game:
                 self._reelimg_r,
                 (
                     screen_width / 2 + symbol_width / 2 + reeldraw_const_a,
-                    currentcoord_rightreel + screen_height / 2 - symbol_height / 2,
+                    currentcoord_rightreel
+                    + screen_height / 2
+                    - symbol_height / 2,
                 ),
             )
         elif (
@@ -439,12 +445,16 @@ class Game:
 
         pygame.draw.rect(
             self._screen,
-            GameData.RGB_BLACK,
+            GameData.COLORS["BLACK"],
             (
                 0,
                 0,
                 screen_width,
-                int(screen_height / 2 - symbol_height * 3 / 2 - reeldraw_const_c),
+                int(
+                    screen_height / 2
+                    - symbol_height * 3 / 2
+                    - reeldraw_const_c
+                ),
             ),
         )
 
@@ -462,10 +472,14 @@ class Game:
 
         pygame.draw.rect(
             self._screen,
-            GameData.RGB_BLACK,
+            GameData.COLORS["BLACK"],
             (
                 0,
-                int(screen_height / 2 + symbol_height * 3 / 2 + reeldraw_const_c),
+                int(
+                    screen_height / 2
+                    + symbol_height * 3 / 2
+                    + reeldraw_const_c
+                ),
                 screen_width,
                 screen_height,
             ),
@@ -487,10 +501,14 @@ class Game:
         # ゲーム画面幅
         screen_width = GameData.SCREEN_WIDTH
 
-        text = self._system_font.render("CREDIT: ", True, GameData.RGB_WHITE)
+        text = self._system_font.render(
+            "CREDIT: ", True, GameData.COLORS["WHITE"]
+        )
         text_rect = text.get_rect(topright=(screen_width - 80, 10))
         self._screen.blit(text, text_rect)
-        text = self._system_font.render(str(credit), True, GameData.RGB_WHITE)
+        text = self._system_font.render(
+            str(credit), True, GameData.COLORS["WHITE"]
+        )
         text_rect = text.get_rect(topright=(screen_width - 10, 10))
         self._screen.blit(text, text_rect)
 
@@ -501,10 +519,14 @@ class Game:
         # ゲーム画面幅
         screen_width = GameData.SCREEN_WIDTH
 
-        text = self._system_font.render("PAY: ", True, GameData.RGB_WHITE)
+        text = self._system_font.render(
+            "PAY: ", True, GameData.COLORS["WHITE"]
+        )
         text_rect = text.get_rect(topright=(screen_width - 80, 35))
         self._screen.blit(text, text_rect)
-        text = self._system_font.render(str(payout), True, GameData.RGB_WHITE)
+        text = self._system_font.render(
+            str(payout), True, GameData.COLORS["WHITE"]
+        )
         text_rect = text.get_rect(topright=(screen_width - 10, 35))
         self._screen.blit(text, text_rect)
 
@@ -528,9 +550,9 @@ class Game:
         uidraw_const_b = GameData.UIDRAW_CONST_B
 
         if replay:
-            replay_font_color = GameData.RGB_WHITE
+            replay_font_color = GameData.COLORS["WHITE"]
         else:
-            replay_font_color = GameData.RGB_GRAY
+            replay_font_color = GameData.COLORS["GRAY"]
         text = self._system_font.render("REP", True, replay_font_color)
         self._screen.blit(
             text,
@@ -565,9 +587,9 @@ class Game:
         uidraw_const_b = GameData.UIDRAW_CONST_B
 
         if wait:
-            wait_font_color = GameData.RGB_WHITE
+            wait_font_color = GameData.COLORS["WHITE"]
         else:
-            wait_font_color = GameData.RGB_GRAY
+            wait_font_color = GameData.COLORS["GRAY"]
         text = self._system_font.render("WAIT", True, wait_font_color)
         self._screen.blit(
             text,
@@ -595,13 +617,15 @@ class Game:
         uidraw_const_b = GameData.UIDRAW_CONST_B
 
         if start:
-            start_font_color = GameData.RGB_WHITE
+            start_font_color = GameData.COLORS["WHITE"]
         else:
-            start_font_color = GameData.RGB_GRAY
+            start_font_color = GameData.COLORS["GRAY"]
         text = self._system_font.render("START", True, start_font_color)
         self._screen.blit(
             text,
-            text.get_rect(topleft=(uidraw_const_a, screen_height / 2 + uidraw_const_b)),
+            text.get_rect(
+                topleft=(uidraw_const_a, screen_height / 2 + uidraw_const_b)
+            ),
         )
 
     def _ui_bet_draw(self):
@@ -617,21 +641,21 @@ class Game:
         uidraw_const_b = GameData.UIDRAW_CONST_B
 
         if bet == 1:
-            bet3_font_color = GameData.RGB_GRAY
-            bet2_font_color = GameData.RGB_GRAY
-            bet1_font_color = GameData.RGB_WHITE
+            bet3_font_color = GameData.COLORS["GRAY"]
+            bet2_font_color = GameData.COLORS["GRAY"]
+            bet1_font_color = GameData.COLORS["WHITE"]
         elif bet == 2:
-            bet3_font_color = GameData.RGB_GRAY
-            bet2_font_color = GameData.RGB_WHITE
-            bet1_font_color = GameData.RGB_WHITE
+            bet3_font_color = GameData.COLORS["GRAY"]
+            bet2_font_color = GameData.COLORS["WHITE"]
+            bet1_font_color = GameData.COLORS["WHITE"]
         elif bet == 3:
-            bet3_font_color = GameData.RGB_WHITE
-            bet2_font_color = GameData.RGB_WHITE
-            bet1_font_color = GameData.RGB_WHITE
+            bet3_font_color = GameData.COLORS["WHITE"]
+            bet2_font_color = GameData.COLORS["WHITE"]
+            bet1_font_color = GameData.COLORS["WHITE"]
         else:
-            bet3_font_color = GameData.RGB_GRAY
-            bet2_font_color = GameData.RGB_GRAY
-            bet1_font_color = GameData.RGB_GRAY
+            bet3_font_color = GameData.COLORS["GRAY"]
+            bet2_font_color = GameData.COLORS["GRAY"]
+            bet1_font_color = GameData.COLORS["GRAY"]
         text = self._system_font.render("3BET", True, bet3_font_color)
         self._screen.blit(
             text,
