@@ -37,19 +37,31 @@ class PressOrder:
         PressOrder._Id += 1
         self._name: str = name
 
+        self._validate_pressorder(pressorder)
+
+        if not self._is_pressorder_possible(pressorder):
+            raise Exception("押し順指定が不正です (正解の押し順がありません)")
+
+        self._pressorder: tuple[
+            int | list[int], int | list[int], int | list[int]
+        ] = pressorder
+
+    def _validate_pressorder(self, pressorder):
         if len(pressorder) != 3:
             raise ValueError("押し順指定の要素数がリール数と一致しません")
+
         for p_order in pressorder:
-            if type(p_order) is int:
+            if isinstance(p_order, int):
                 if p_order not in [1, 2, 3]:
                     raise ValueError(
                         "押し順指定が不正です "
                         "(1:第一停止, 2:第二停止, 3:第三停止)"
                     )
-            elif type(p_order) is list:
+                continue
+            if isinstance(p_order, list):
                 if len(set(p_order)) != len(p_order):
                     raise ValueError("同一の押し順が2つ以上指定されています")
-                if 3 < len(p_order):
+                if len(p_order) > 3:
                     raise ValueError("押し順指定の要素数が不正です")
                 for p_o in p_order:
                     if p_o not in [1, 2, 3]:
@@ -57,15 +69,8 @@ class PressOrder:
                             "押し順指定が不正です "
                             "(1:第一停止, 2:第二停止, 3:第三停止)"
                         )
-            else:
-                raise TypeError("押し順指定の型が不正です")
-
-        if not (self._is_pressorder_possible(pressorder)):
-            raise Exception("押し順指定が不正です (正解の押し順がありません)")
-
-        self._pressorder: tuple[
-            int | list[int], int | list[int], int | list[int]
-        ] = pressorder
+                continue
+            raise TypeError("押し順指定の型が不正です")
 
     def _is_pressorder_possible(
         self,
@@ -343,6 +348,23 @@ class Role:
         self._name: str = name
         self._payout: int = payout
 
+        self._validate_symbolcombo(symbolcombo)
+        self._symbolcombo: tuple[
+            Symbol | list[Symbol], Symbol | list[Symbol], Symbol | list[Symbol]
+        ] = symbolcombo
+
+        self._validate_validpayline(validpayline)
+        self._validpayline: PayLine | list[PayLine] = validpayline
+
+        if not isinstance(validslip, ValidSlip):
+            raise TypeError("有効滑りの型が不正です")
+        self._validslip: ValidSlip = validslip
+
+        if not isinstance(pressorder, PressOrder):
+            raise TypeError("押し順指定の型が不正です")
+        self._pressorder: PressOrder = pressorder
+
+    def _validate_symbolcombo(self, symbolcombo):
         if len(symbolcombo) != 3:
             raise ValueError("図柄組合せ指定の要素数がリール数と一致しません")
         for s_combo in symbolcombo:
@@ -355,10 +377,7 @@ class Role:
             elif not isinstance(s_combo, Symbol):
                 raise TypeError("図柄の型が不正です")
 
-        self._symbolcombo: tuple[
-            Symbol | list[Symbol], Symbol | list[Symbol], Symbol | list[Symbol]
-        ] = symbolcombo
-
+    def _validate_validpayline(self, validpayline):
         if type(validpayline) is list:
             if len(set(validpayline)) != len(validpayline):
                 raise ValueError("同一の有効ラインが2つ以上指定されています")
@@ -367,15 +386,6 @@ class Role:
                     raise TypeError("有効ラインの型が不正です")
         elif not isinstance(validpayline, PayLine):
             raise TypeError("有効ラインの型が不正です")
-        self._validpayline: PayLine | list[PayLine] = validpayline
-
-        if not isinstance(validslip, ValidSlip):
-            raise TypeError("有効滑りの型が不正です")
-        self._validslip: ValidSlip = validslip
-
-        if not isinstance(pressorder, PressOrder):
-            raise TypeError("押し順指定の型が不正です")
-        self._pressorder: PressOrder = pressorder
 
     @property
     def id(self) -> int:
@@ -386,11 +396,11 @@ class Role:
         return self._name
 
     @property
-    def payout(self) -> int:
-        return self._payout
-
-    @property
-    def symbolcombo(self) -> SymbolCombo:
+    def symbolcombo(
+        self,
+    ) -> tuple[
+        Symbol | list[Symbol], Symbol | list[Symbol], Symbol | list[Symbol]
+    ]:
         return self._symbolcombo
 
     @property
