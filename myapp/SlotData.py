@@ -1,3 +1,4 @@
+import GameData
 from PayLine import PayLine
 from State import State
 from Symbol import Symbol
@@ -89,8 +90,38 @@ REEL_SYMBOLPATTERN_R = [
 ]
 
 # 有効ライン
-PAYLINE_UPPER = PayLine("上段", payline=(0, 0, 0))
-PAYLINE_MIDDLE = PayLine("中段", payline=(1, 1, 1))
-PAYLINE_LOWER = PayLine("下段", payline=(2, 2, 2))
-PAYLINE_RIGHTUP = PayLine("右上がり", payline=(2, 1, 0))
-PAYLINE_RIGHTDOWN = PayLine("右下がり", payline=(0, 1, 2))
+PAYLINE_UPPER = PayLine(
+    payline=(
+        GameData.REEL_POSITION_TOP,
+        GameData.REEL_POSITION_TOP,
+        GameData.REEL_POSITION_TOP,
+    )
+)
+PAYLINE_MIDDLE = PayLine(
+    payline=(
+        GameData.REEL_POSITION_MIDDLE,
+        GameData.REEL_POSITION_MIDDLE,
+        GameData.REEL_POSITION_MIDDLE,
+    )
+)
+PAYLINE_LOWER = PayLine(
+    payline=(
+        GameData.REEL_POSITION_BOTTOM,
+        GameData.REEL_POSITION_BOTTOM,
+        GameData.REEL_POSITION_BOTTOM,
+    )
+)
+PAYLINE_RIGHTUP = PayLine(
+    payline=(
+        GameData.REEL_POSITION_BOTTOM,
+        GameData.REEL_POSITION_MIDDLE,
+        GameData.REEL_POSITION_TOP,
+    )
+)
+PAYLINE_RIGHTDOWN = PayLine(
+    payline=(
+        GameData.REEL_POSITION_TOP,
+        GameData.REEL_POSITION_MIDDLE,
+        GameData.REEL_POSITION_BOTTOM,
+    )
+)

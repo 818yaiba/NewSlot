@@ -8,8 +8,6 @@ class PayLine:
     ----------
     id : int
         入賞ラインID
-    name : str
-        入賞ライン名
     payline : tuple[int, int, int]
         入賞ライン [左リール, 中リール, 右リール]
         (0:上段, 1:中段, 2:下段)
@@ -17,18 +15,15 @@ class PayLine:
 
     _Id: int = 0
 
-    def __init__(self, name: str, payline: tuple[int, int, int]) -> None:
+    def __init__(self, payline: tuple[int, int, int]) -> None:
         """
         Parameters
         ----------
-        name : str
-            入賞ライン名
         payline : tuple[int, int, int]
             入賞ライン [左リール, 中リール, 右リール]
         """
         self._id: int = PayLine._Id
         PayLine._Id += 1
-        self._name: str = name
 
         if not isinstance(payline, tuple):
             raise TypeError("入賞ラインの型が不正です")
@@ -48,10 +43,6 @@ class PayLine:
     @property
     def id(self) -> int:
         return self._id
-
-    @property
-    def name(self) -> str:
-        return self._name
 
     @property
     def payline(self) -> tuple[int, int, int]:

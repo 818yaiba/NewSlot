@@ -35,7 +35,7 @@ class Slot:
         設定
     """
 
-    def __init__(self, setting: int | None = None):
+    def __init__(self):
         self._credit = 0
         self._payout = 0
         self._bet = 0
@@ -43,15 +43,15 @@ class Slot:
         # self._payline: list[payline] = None
         self._roles = None
         self._reel = [
-            Reel("REEL_L", SlotData.REEL_SYMBOLPATTERN_L),
-            Reel("REEL_C", SlotData.REEL_SYMBOLPATTERN_C),
-            Reel("REEL_R", SlotData.REEL_SYMBOLPATTERN_R),
+            Reel(reel_symbol=SlotData.REEL_SYMBOLPATTERN_L),
+            Reel(reel_symbol=SlotData.REEL_SYMBOLPATTERN_C),
+            Reel(reel_symbol=SlotData.REEL_SYMBOLPATTERN_R),
         ]
         self._start: bool = False
         self._replay: bool = False
         self._wait: bool = False
         self._gaming: bool = False
-        self._setting = setting
+        # self._setting = setting
         self._beting: bool = False
         self._targetbet: int = False
         self._latest_betstart_time: float = time.perf_counter()

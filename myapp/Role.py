@@ -4,16 +4,14 @@ from Symbol import Symbol
 
 class PressOrder:
     """
-    押し順指定
+    押し順
 
     Attributes
     ----------
     id : int
-        押し順指定ID
-    name : str
-        押し順指定名
-    pressorder : tuple[int | list[int], int | list[int], int | list[int]]
-        押し順指定 [左リール, 中リール, 右リール]
+        押し順ID
+    pressorder : tuple[list[int], list[int], list[int]]
+        押し順 [左リール, 中リール, 右リール]
         (1:第一停止, 2:第二停止, 3:第三停止)
     """
 
@@ -21,68 +19,53 @@ class PressOrder:
 
     def __init__(
         self,
-        name: str,
-        pressorder: tuple[int | list[int], int | list[int], int | list[int]],
+        pressorder: tuple[list[int], list[int], list[int]],
     ):
         """
         Parameters
         ----------
-        name : str
-            押し順指定名
-        pressorder : tuple[int | list[int], int | list[int], int | list[int]]
-            押し順指定 [左リール, 中リール, 右リール]
+        pressorder : tuple[list[int], list[int], list[int]]
+            押し順 [左リール, 中リール, 右リール]
             (1:第一停止, 2:第二停止, 3:第三停止)
         """
         self._id: int = PressOrder._Id
         PressOrder._Id += 1
-        self._name: str = name
 
-        self._validate_pressorder(pressorder)
-
-        if not self._is_pressorder_possible(pressorder):
-            raise Exception("押し順指定が不正です (正解の押し順がありません)")
-
-        self._pressorder: tuple[
-            int | list[int], int | list[int], int | list[int]
-        ] = pressorder
-
-    def _validate_pressorder(self, pressorder):
+        if not isinstance(pressorder, tuple):
+            raise TypeError("押し順の型が不正です")
         if len(pressorder) != 3:
-            raise ValueError("押し順指定の要素数がリール数と一致しません")
+            raise ValueError("押し順の要素数がリール数と一致しません")
 
         for p_order in pressorder:
-            if isinstance(p_order, int):
-                if p_order not in [1, 2, 3]:
+            if not isinstance(p_order, list):
+                raise TypeError("押し順指定の型が不正です")
+            if len(set(p_order)) != len(p_order):
+                raise ValueError("同一の押し順が2つ以上指定されています")
+            if len(p_order) > 3:
+                raise ValueError("押し順指定の要素数が不正です")
+            for p_o in p_order:
+                if p_o not in [1, 2, 3]:
                     raise ValueError(
                         "押し順指定が不正です "
                         "(1:第一停止, 2:第二停止, 3:第三停止)"
                     )
-                continue
-            if isinstance(p_order, list):
-                if len(set(p_order)) != len(p_order):
-                    raise ValueError("同一の押し順が2つ以上指定されています")
-                if len(p_order) > 3:
-                    raise ValueError("押し順指定の要素数が不正です")
-                for p_o in p_order:
-                    if p_o not in [1, 2, 3]:
-                        raise ValueError(
-                            "押し順指定が不正です "
-                            "(1:第一停止, 2:第二停止, 3:第三停止)"
-                        )
-                continue
-            raise TypeError("押し順指定の型が不正です")
+
+        if not self._is_pressorder_possible(pressorder):
+            raise Exception("押し順が不正です (正解の押し順がありません)")
+
+        self._pressorder = pressorder
 
     def _is_pressorder_possible(
         self,
-        pressorder: tuple[int | list[int], int | list[int], int | list[int]],
+        pressorder: tuple[list[int], list[int], list[int]],
     ) -> bool:
         """
-        押し順指定に正解(1, 2, 3)があるか判定する
+        押し順に正解(1, 2, 3)があるか判定する
 
         Parameters
         ----------
-        pressorder : tuple[int | list[int], int | list[int], int | list[int]]
-            押し順指定 [左リール, 中リール, 右リール]
+        pressorder : tuple[list[int], list[int], list[int]]
+            押し順 [左リール, 中リール, 右リール]
             (1:第一停止, 2:第二停止, 3:第三停止)
 
         Returns
@@ -90,28 +73,11 @@ class PressOrder:
         result : bool
             判定結果
         """
-
-        leftreel_value = (
-            pressorder[0]
-            if isinstance(pressorder[0], (tuple, list, set))
-            else (pressorder[0],)
-        )
-        centerreel_value = (
-            pressorder[1]
-            if isinstance(pressorder[1], (tuple, list, set))
-            else (pressorder[1],)
-        )
-        rightreel_value = (
-            pressorder[2]
-            if isinstance(pressorder[2], (tuple, list, set))
-            else (pressorder[2],)
-        )
-
         result: bool = False
-        for val_l in leftreel_value:
-            for val_c in centerreel_value:
-                for val_r in rightreel_value:
-                    if sorted([val_l, val_c, val_r]) == [1, 2, 3]:
+        for val_l in pressorder[0]:
+            for val_c in pressorder[1]:
+                for val_r in pressorder[2]:
+                    if [val_l, val_c, val_r].sort() == [1, 2, 3]:
                         result = True
 
         return result
@@ -121,28 +87,22 @@ class PressOrder:
         return self._id
 
     @property
-    def name(self) -> str:
-        return self._name
-
-    @property
     def pressorder(
         self,
     ) -> tuple[int | list[int], int | list[int], int | list[int]]:
         return self._pressorder
 
 
-class ValidSlip:
+class Slip:
     """
-    有効滑り
+    滑り
 
     Attributes
     ----------
     id : int
-        有効滑りID
-    name : str
-        有効滑り名
-    validslip : tuple[int | list[int], int | list[int], int | list[int]]
-        有効滑り [左リール, 中リール, 右リール]
+        滑りID
+    validslip : tuple[list[int], list[int], list[int]]
+        滑り [左リール, 中リール, 右リール]
         (0: ビタ, 1: 1滑り, 2: 2滑り, 3: 3滑り, 4: 4滑り)
     """
 
@@ -150,62 +110,47 @@ class ValidSlip:
 
     def __init__(
         self,
-        name: str,
-        validslip: tuple[int | list[int], int | list[int], int | list[int]],
+        slip: tuple[list[int], list[int], list[int]],
     ):
         """
         Parameters
         ----------
-        name : str
-            滑り名
-        validslip : tuple[int | list[int], int | list[int], int | list[int]]
-            有効滑り [左リール, 中リール, 右リール]
+        validslip : tuple[list[int], list[int], list[int]]
+            滑り [左リール, 中リール, 右リール]
             (0: ビタ, 1: 1滑り, 2: 2滑り, 3: 3滑り, 4: 4滑り)
         """
-        self._id = ValidSlip._Id
-        ValidSlip._Id += 1
-        self._name = name
+        self._id = Slip._Id
+        Slip._Id += 1
 
-        if len(validslip) != 3:
-            raise ValueError("有効滑り指定の要素数がリール数と一致しません")
-        for v_slip in validslip:
-            if type(v_slip) is int:
-                if v_slip not in [0, 1, 2, 3, 4]:
+        if not isinstance(slip, tuple):
+            raise TypeError("滑りの型が不正です")
+        if len(slip) != 3:
+            raise ValueError("滑りの要素数がリール数と一致しません")
+        for sl in slip:
+            if not isinstance(sl, list):
+                raise TypeError("滑り指定の型が不正です")
+            if len(set(sl)) != len(sl):
+                raise ValueError("同一の滑りが2つ以上指定されています")
+            if len(sl) > 5:
+                raise ValueError("滑り指定の要素数が不正です")
+            for s in sl:
+                if s not in [0, 1, 2, 3, 4]:
                     raise ValueError(
-                        "有効滑り指定が不正です "
+                        "滑り指定が不正です "
                         "(0: ビタ, 1: 1滑り, 2: 2滑り, 3: 3滑り, 4: 4滑り)"
                     )
-            elif type(v_slip) is list:
-                if len(set(v_slip)) != len(v_slip):
-                    raise ValueError("同一の有効滑りが2つ以上指定されています")
-                if 5 < len(v_slip):
-                    raise ValueError("有効滑り指定の要素数が不正です")
-                for v_s in v_slip:
-                    if v_s not in [0, 1, 2, 3, 4]:
-                        raise ValueError(
-                            "有効滑り指定が不正です "
-                            "(0: ビタ, 1: 1滑り, 2: 2滑り, 3: 3滑り, 4: 4滑り)"
-                        )
-            else:
-                raise TypeError("有効滑り指定の型が不正です")
 
-        self._validslip: tuple[
-            int | list[int], int | list[int], int | list[int]
-        ] = validslip
+        self._slip = slip
 
     @property
     def id(self) -> int:
         return self._id
 
     @property
-    def name(self) -> str:
-        return self._name
-
-    @property
     def validslip(
         self,
-    ) -> tuple[int | list[int], int | list[int], int | list[int]]:
-        return self._validslip
+    ) -> tuple[list[int], list[int], list[int]]:
+        return self._slip
 
 
 class SymbolCombo:
@@ -216,13 +161,7 @@ class SymbolCombo:
     ----------
     id : int
         図柄組合せID
-    name : str
-        図柄組合せ名
-    symbolcombo : tuple[
-                    Symbol | list[Symbol],
-                    Symbol | list[Symbol],
-                    Symbol | list[Symbol]
-                    ]
+    symbolcombo : tuple[list[Symbol], list[Symbol], list[Symbol]]
         図柄組合せ [左リール, 中リール, 右リール]
     """
 
@@ -230,57 +169,43 @@ class SymbolCombo:
 
     def __init__(
         self,
-        name: str,
-        symbolcombo: tuple[
-            Symbol | list[Symbol], Symbol | list[Symbol], Symbol | list[Symbol]
-        ],
+        symbolcombo: tuple[list[Symbol], list[Symbol], list[Symbol]],
     ):
         """
         Parameters
         ----------
         name : str
-            滑り名
-        symbolcombo : tuple[
-                        Symbol | list[Symbol],
-                        Symbol | list[Symbol],
-                        Symbol | list[Symbol]
-                        ]
+            図柄組合せ名
+        symbolcombo : tuple[list[Symbol], list[Symbol], list[Symbol]]
             図柄組合せ [左リール, 中リール, 右リール]
         """
         self._id: int = SymbolCombo._Id
         SymbolCombo._Id += 1
-        self._name: str = name
 
+        if not isinstance(symbolcombo, tuple):
+            raise TypeError("図柄組合せの型が不正です")
         if len(symbolcombo) != 3:
-            raise ValueError("図柄組合せ指定の要素数がリール数と一致しません")
-        for s_combo in symbolcombo:
-            if type(s_combo) is list:
-                if len(set(s_combo)) != len(s_combo):
-                    raise ValueError("同一の図柄が2つ以上指定されています")
-                for s_c in s_combo:
-                    if not isinstance(s_c, Symbol):
-                        raise TypeError("図柄の型が不正です")
-            elif not isinstance(s_combo, Symbol):
-                raise TypeError("図柄の型が不正です")
+            raise ValueError("図柄組合せの要素数がリール数と一致しません")
 
-        self._symbolcombo: tuple[
-            Symbol | list[Symbol], Symbol | list[Symbol], Symbol | list[Symbol]
-        ] = symbolcombo
+        for s_combo in symbolcombo:
+            if not isinstance(s_combo, list):
+                raise TypeError("図柄指定の型が不正です")
+            if len(set(s_combo)) != len(s_combo):
+                raise ValueError("同一の図柄が2つ以上指定されています")
+            for s_c in s_combo:
+                if not isinstance(s_c, Symbol):
+                    raise TypeError("図柄の型が不正です")
+
+        self._symbolcombo = symbolcombo
 
     @property
     def id(self) -> int:
         return self._id
 
     @property
-    def name(self) -> str:
-        return self._name
-
-    @property
     def symbolcombo(
         self,
-    ) -> tuple[
-        Symbol | list[Symbol], Symbol | list[Symbol], Symbol | list[Symbol]
-    ]:
+    ) -> tuple[list[Symbol], list[Symbol], list[Symbol]]:
         return self._symbolcombo
 
 
@@ -296,16 +221,12 @@ class Role:
         役名
     payout : int
         払出クレジット数
-    symbolcombo : tuple[
-                    Symbol | list[Symbol],
-                    Symbol | list[Symbol],
-                    Symbol | list[Symbol]
-                    ]
-        図柄組合せ [左リール, 中リール, 右リール]
-    validpayline : PayLine | list[PayLine, ...]
-        有効入賞ライン [左リール, 中リール, 右リール]
-    validslip : ValidSlip
-        有効滑り
+    symbolcombo : SymbolCombo
+        図柄組合せ
+    payline : list[PayLine]
+        入賞ライン
+    slip : Slip
+        滑り
     pressorder : PressOrder
         押し順指定
     """
@@ -316,11 +237,9 @@ class Role:
         self,
         name: str,
         payout: int,
-        symbolcombo: tuple[
-            Symbol | list[Symbol], Symbol | list[Symbol], Symbol | list[Symbol]
-        ],
-        validpayline: PayLine | list[PayLine],
-        validslip: ValidSlip,
+        symbolcombo: SymbolCombo,
+        payline: list[PayLine],
+        slip: Slip,
         pressorder: PressOrder,
     ):
         """
@@ -330,62 +249,41 @@ class Role:
             役名
         payout : int
             払出クレジット数
-        symbolcombo : tuple[
-                        Symbol | list[Symbol],
-                        Symbol | list[Symbol],
-                        Symbol | list[Symbol]
-                        ]
-            図柄組合せ [左リール, 中リール, 右リール]
-        validpayline : PayLine | list[PayLine, ...]
-            有効入賞ライン [左リール, 中リール, 右リール]
-        validslip : ValidSlip
-            有効滑り
+        symbolcombo : SymbolCombo
+            図柄組合せ
+        payline : list[PayLine]
+            入賞ライン
+        slip : Slip
+            滑り
         pressorder : PressOrder
             押し順指定
         """
         self._id: int = Role._Id
         Role._Id += 1
         self._name: str = name
-        self._payout: int = payout
 
-        self._validate_symbolcombo(symbolcombo)
-        self._symbolcombo: tuple[
-            Symbol | list[Symbol], Symbol | list[Symbol], Symbol | list[Symbol]
-        ] = symbolcombo
+        if not isinstance(payout, int):
+            raise TypeError("払出クレジット数の型が不正です")
+        self._payout = payout
 
-        self._validate_validpayline(validpayline)
-        self._validpayline: PayLine | list[PayLine] = validpayline
+        if not isinstance(symbolcombo, SymbolCombo):
+            raise TypeError("図柄組合せの型が不正です")
+        self._symbolcombo = symbolcombo
 
-        if not isinstance(validslip, ValidSlip):
-            raise TypeError("有効滑りの型が不正です")
-        self._validslip: ValidSlip = validslip
+        if not isinstance(payline, list):
+            raise TypeError("入賞ラインの型が不正です")
+        for pl in payline:
+            if not isinstance(pl, PayLine):
+                raise TypeError("入賞ライン指定の型が不正です")
+        self._payline = payline
+
+        if not isinstance(slip, Slip):
+            raise TypeError("滑りの型が不正です")
+        self._slip = slip
 
         if not isinstance(pressorder, PressOrder):
             raise TypeError("押し順指定の型が不正です")
-        self._pressorder: PressOrder = pressorder
-
-    def _validate_symbolcombo(self, symbolcombo):
-        if len(symbolcombo) != 3:
-            raise ValueError("図柄組合せ指定の要素数がリール数と一致しません")
-        for s_combo in symbolcombo:
-            if type(s_combo) is list:
-                if len(set(s_combo)) != len(s_combo):
-                    raise ValueError("同一の図柄が2つ以上指定されています")
-                for s_c in s_combo:
-                    if not isinstance(s_c, Symbol):
-                        raise TypeError("図柄の型が不正です")
-            elif not isinstance(s_combo, Symbol):
-                raise TypeError("図柄の型が不正です")
-
-    def _validate_validpayline(self, validpayline):
-        if type(validpayline) is list:
-            if len(set(validpayline)) != len(validpayline):
-                raise ValueError("同一の有効ラインが2つ以上指定されています")
-            for v_payline in validpayline:
-                if not isinstance(v_payline, PayLine):
-                    raise TypeError("有効ラインの型が不正です")
-        elif not isinstance(validpayline, PayLine):
-            raise TypeError("有効ラインの型が不正です")
+        self._pressorder = pressorder
 
     @property
     def id(self) -> int:
@@ -396,20 +294,20 @@ class Role:
         return self._name
 
     @property
-    def symbolcombo(
-        self,
-    ) -> tuple[
-        Symbol | list[Symbol], Symbol | list[Symbol], Symbol | list[Symbol]
-    ]:
+    def payout(self) -> int:
+        return self._payout
+
+    @property
+    def symbolcombo(self) -> SymbolCombo:
         return self._symbolcombo
 
     @property
-    def validpayline(self) -> PayLine | list[PayLine]:
-        return self._validpayline
+    def payline(self) -> list[PayLine]:
+        return self._payline
 
     @property
-    def validslip(self) -> ValidSlip:
-        return self._validslip
+    def slip(self) -> Slip:
+        return self._slip
 
     @property
     def pressorder(self) -> PressOrder:

@@ -11,8 +11,6 @@ class Reel:
     ----------
     id : int
         リールID
-    name : str
-        リール名
     reel_symbol : list[Symbol]
         リール配列
     reel_image : MatLike
@@ -31,18 +29,15 @@ class Reel:
 
     _Id: int = 0
 
-    def __init__(self, name: str, reel_symbol: list[Symbol]) -> None:
+    def __init__(self, reel_symbol: list[Symbol]) -> None:
         """
         Parameters
         ----------
-        name : str
-            リール名
         reel_symbol: list[Symbol]
             リール配列
         """
         self._id: int = Reel._Id
         Reel._Id += 1
-        self._name: str = name
 
         if len(reel_symbol) != GameData.REEL_SYMBOL_LENGTH:
             raise ValueError(
@@ -226,10 +221,6 @@ class Reel:
     @property
     def id(self) -> int:
         return self._id
-
-    @property
-    def name(self) -> str:
-        return self._name
 
     @property
     def reel_symbol(self) -> list[Symbol]:
