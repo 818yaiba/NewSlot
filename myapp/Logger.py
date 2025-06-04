@@ -1,52 +1,29 @@
 import logging
+import os
+from datetime import datetime
 
 import config
 
+# ログ設定が一度だけ行われるようにフラグを用意
+_is_configured = False
 
-class Logger:
-    """カスタムロガークラス
-    Attributes:
-    ----------
-    name : str
-        ロガーの名前
-    level : int
-        ログレベル（デフォルトはINFO）
-    filename : str | None
-        ログファイル名（指定しない場合は標準出力のみ）
-    """
 
-    def __init__(self, name, level=config.LOG_LEVEL, filename=None):
-        self.logger = logging.getLogger(name)
-        self.logger.setLevel(level)
+def setup_logging():
+    global _is_configured
+    if _is_configured:
+        return  # すでに設定済みなら何もしない
 
-        formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+    os.makedirs(config.LOG_DIR, exist_ok=True)
+    now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    log_file = os.path.join(config.LOG_DIR, f"log_{now}.log")
 
-        # 既存のハンドラをクリア（多重出力防止）
-        if self.logger.hasHandlers():
-            self.logger.handlers.clear()
+    logging.basicConfig(
+        level=config.LOG_LEVEL,
+        format="%(asctime)s %(levelname)s %(name)s %(message)s",
+        handlers=[logging.StreamHandler(), logging.FileHandler(log_file)],
+    )
+    _is_configured = True
 
-        # 標準出力
-        stream_handler = logging.StreamHandler()
-        stream_handler.setFormatter(formatter)
-        self.logger.addHandler(stream_handler)
 
-        # ファイル出力が必要な場合
-        if filename:
-            file_handler = logging.FileHandler(filename)
-            file_handler.setFormatter(formatter)
-            self.logger.addHandler(file_handler)
-
-    def debug(self, msg):
-        self.logger.debug(msg)
-
-    def info(self, msg):
-        self.logger.info(msg)
-
-    def warning(self, msg):
-        self.logger.warning(msg)
-
-    def error(self, msg):
-        self.logger.error(msg)
-
-    def critical(self, msg):
-        self.logger.critical(msg)
+def get_logger(name: str):
+    return logging.getLogger(name)

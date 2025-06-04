@@ -1,3 +1,4 @@
 import logging
 
-LOG_LEVEL = logging.ERROR
+LOG_LEVEL = logging.DEBUG
+LOG_DIR = "logs"

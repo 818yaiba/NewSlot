@@ -91,35 +91,35 @@ REEL_SYMBOLPATTERN_R = [
 
 # 有効ライン
 PAYLINE_UPPER = PayLine(
-    payline=(
+    line=(
         GameData.REEL_POSITION_TOP,
         GameData.REEL_POSITION_TOP,
         GameData.REEL_POSITION_TOP,
     )
 )
 PAYLINE_MIDDLE = PayLine(
-    payline=(
+    line=(
         GameData.REEL_POSITION_MIDDLE,
         GameData.REEL_POSITION_MIDDLE,
         GameData.REEL_POSITION_MIDDLE,
     )
 )
 PAYLINE_LOWER = PayLine(
-    payline=(
+    line=(
         GameData.REEL_POSITION_BOTTOM,
         GameData.REEL_POSITION_BOTTOM,
         GameData.REEL_POSITION_BOTTOM,
     )
 )
 PAYLINE_RIGHTUP = PayLine(
-    payline=(
+    line=(
         GameData.REEL_POSITION_BOTTOM,
         GameData.REEL_POSITION_MIDDLE,
         GameData.REEL_POSITION_TOP,
     )
 )
 PAYLINE_RIGHTDOWN = PayLine(
-    payline=(
+    line=(
         GameData.REEL_POSITION_TOP,
         GameData.REEL_POSITION_MIDDLE,
         GameData.REEL_POSITION_BOTTOM,

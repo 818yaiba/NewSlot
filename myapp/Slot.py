@@ -1,8 +1,11 @@
 import time
 
 import GameData
+import Logger
 import SlotData
 from Reel import Reel
+
+log = Logger.get_logger(__name__)
 
 
 class Slot:
@@ -42,6 +45,8 @@ class Slot:
         self._validbet: list[int] = [3]
         # self._payline: list[payline] = None
         self._roles = None
+
+        log.info("reel generate")
         self._reel = [
             Reel(reel_symbol=SlotData.REEL_SYMBOLPATTERN_L),
             Reel(reel_symbol=SlotData.REEL_SYMBOLPATTERN_C),
