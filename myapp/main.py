@@ -6,10 +6,14 @@
 
 import GameData
 from Game import Game
+from Logger import Logger
+
+log = Logger(__name__)
 
 
-def main():
-    game = Game(GameData.GAME_TITLE)
+def main() -> None:
+    log.info("実行開始")
+    game = Game(name=GameData.GAME_TITLE)
     game.main_loop()
 
 
