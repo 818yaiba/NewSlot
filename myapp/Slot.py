@@ -52,6 +52,10 @@ class Slot:
             Reel(reel_symbol=SlotData.REEL_SYMBOLPATTERN_C),
             Reel(reel_symbol=SlotData.REEL_SYMBOLPATTERN_R),
         ]
+        log.info(self._reel[0].current_symbol[0].name)
+        log.info(self._reel[0].current_symbol[1].name)
+        log.info(self._reel[0].current_symbol[2].name)
+        log.info(self._reel[0].get_n_ahead_symbol(n=1)[0].name)
         self._start: bool = False
         self._replay: bool = False
         self._wait: bool = False
@@ -168,8 +172,8 @@ class Slot:
 
     def _leftreelstop(self):
         """左リール停止処理"""
-        if "左リール回転中()?":
-            if "左リールに停止指示がない()?":
+        if self._reel[0].spinning:
+            if not self._reel[0].stop_request:
                 # 左リール停止指示()
                 pass
 
