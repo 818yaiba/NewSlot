@@ -21,9 +21,9 @@ class Reel:
         現在表示中の図柄
     target_symbol : list[Symbol]
         目標図柄
-    rotate_instruction : bool
+    spinning : bool
         リール回転状態
-    stop_instruction : bool
+    stop_request : bool
         リール停止指示状態
     """
 
@@ -51,15 +51,15 @@ class Reel:
         if self._reel_image.shape[0] != GameData.REEL_HEIGHT:
             raise ValueError("リール画像の高さが既定値と一致しません")
 
-        self._current_coord: float = 0.0
+        self._current_coord: float = 600.0
         self._current_symbol: list[Symbol] = self._get_current_symbol()
 
         self._target_symbol: list[Symbol] | list[None] = [None, None, None]
 
-        self._rotate_instruction: bool = False
-        self._stop_instruction: bool = True
+        self._spinning: bool = False
+        self._stop_request: bool = True
 
-    def _get_reel_image(self, symbol_array: list[Symbol]) -> MatLike:
+    def _get_reel_image(self, symbols: list["Symbol"]) -> MatLike:
         """リール画像を生成して返す
 
         Parameters
@@ -72,13 +72,20 @@ class Reel:
         reel_image: MatLike
             リール画像
         """
-        reel_image_tmp = symbol_array[0].image
-        for symbol in symbol_array[1:]:
+        # 画像サイズチェック
+        base_shape = symbols[0].image.shape
+        for symbol in symbols:
+            if symbol.image.shape != base_shape:
+                raise ValueError("リール画像のサイズが一致しません")
+            if symbol.image.shape[1] != GameData.REEL_WIDTH:
+                raise ValueError("リール画像の幅が不正です")
+            if symbol.image.shape[0] != GameData.SYMBOL_HEIGHT:
+                raise ValueError("リール画像の高さが不正です")
+        # 画像を縦に連結
+        reel_image_tmp = symbols[0].image
+        for symbol in symbols[1:]:
             reel_image_tmp = cv2.vconcat([reel_image_tmp, symbol.image])
-
-        reel_image = reel_image_tmp
-
-        return reel_image
+        return reel_image_tmp
 
     def _get_current_symbol(self) -> list[Symbol]:
         """現在リール上にある図柄を取得し、現在表示中の図柄として返す
@@ -92,17 +99,16 @@ class Reel:
         symbol_height = GameData.SYMBOL_HEIGHT
 
         # 上段/中段/下段に表示されている図柄のインデックスを算出
-        current_symbol_index_top = int(self._current_coord // symbol_height)
-        current_symbol_index_middle = current_symbol_index_top - 1
-        current_symbol_index_bottom = current_symbol_index_middle - 1
+        current_symbol_index_top = int(self._current_coord / symbol_height) - 1
+        current_symbol_index_middle = current_symbol_index_top + 1
+        current_symbol_index_bottom = current_symbol_index_middle + 1
 
         # リール図柄数
         reel_symbol_length = GameData.REEL_SYMBOL_LENGTH
-        # リールの1周分を考慮して補正を行う
-        if current_symbol_index_middle < 0:
-            current_symbol_index_middle += reel_symbol_length
-        if current_symbol_index_bottom < 0:
-            current_symbol_index_bottom += reel_symbol_length
+        # 1周分の補正
+        current_symbol_index_top %= reel_symbol_length
+        current_symbol_index_middle %= reel_symbol_length
+        current_symbol_index_bottom %= reel_symbol_length
 
         # 図柄のインデックスからオブジェクト取得
         current_symbol: list[Symbol] = [
@@ -112,6 +118,43 @@ class Reel:
         ]
 
         return current_symbol
+
+    def get_n_ahead_symbol(self, n: int) -> list[Symbol]:
+        """現在位置からn個先の図柄を取得
+
+        Parameters
+        ----------
+        n : int
+            取得先までの図柄数
+        """
+        if n < 0:
+            raise ValueError("nに負の値は指定できません")
+
+        target_symbol_index_top = (
+            self._reel_symbol.index(
+                self._current_symbol[GameData.REEL_POSITION_TOP]
+            )
+            - n
+        )
+        target_symbol_index_middle = target_symbol_index_top + 1
+        target_symbol_index_bottom = target_symbol_index_middle + 1
+
+        # リール図柄数
+        reel_symbol_length = GameData.REEL_SYMBOL_LENGTH
+
+        # 1周分の補正
+        target_symbol_index_top %= reel_symbol_length
+        target_symbol_index_middle %= reel_symbol_length
+        target_symbol_index_bottom %= reel_symbol_length
+
+        # 図柄のインデックスからオブジェクト取得
+        target_symbol: list[Symbol] = [
+            self._reel_symbol[target_symbol_index_top],
+            self._reel_symbol[target_symbol_index_middle],
+            self._reel_symbol[target_symbol_index_bottom],
+        ]
+
+        return target_symbol
 
     def _get_target_symbol(
         self, target_symbol_index: int, target_stop_position: int
@@ -166,10 +209,10 @@ class Reel:
     def reel_start(self) -> None:
         """リールの回転を開始する"""
         self._targetsymbol = [None, None, None]
-        self._rotate_instruction = True
-        self._stop_instruction = False
+        self._spinning = True
+        self._stop_request = False
 
-    def reel_stop(
+    def stop_spin(
         self, target_symbol_index: int, target_stop_position: int
     ) -> None:
         """リール停止指示を行う
@@ -187,7 +230,7 @@ class Reel:
         )
 
         # リール停止指示
-        self._stop_instruction = True
+        self._stop_request = True
 
     def update(self, dt: float):
         """リール状態を更新する
@@ -197,26 +240,51 @@ class Reel:
         dt: float
             前回からの経過時間
         """
+
         # 回転中の場合
-        if self._rotate_instruction:
-            # リール画像高さ
-            reel_height = GameData.REEL_HEIGHT
-
-            # 前回からの経過時間から現在座標を計算
-            self._current_coord += (reel_height / GameData.REEL_SPEED) * dt
-
-            # 現在座標がリール端を超えている場合、補正する
-            if self._current_coord >= reel_height:
-                self._current_coord %= reel_height
+        if self._spinning:
+            # リール座標を更新する
+            self._current_coord = self._get_updated_current_coord(
+                self._current_coord, dt
+            )
 
             # 現在表示中の図柄を取得
             self._current_symbol = self._get_current_symbol()
 
             # 停止指示がある場合
-            if self._stop_instruction:
+            if self._stop_request:
                 # 現在表示中の図柄 = 停止目標図柄であれば回転停止
                 if self._current_symbol == self._targetsymbol:
-                    self._rotate_instruction = False
+                    self._spinning = False
+
+    def _get_updated_current_coord(
+        self, current_coord: float, dt: float
+    ) -> float:
+        """リールの現在座標を更新する
+
+        Parameters
+        ----------
+        dt: float
+            前回からの経過時間
+        current_coord: float
+            現在座標
+
+        Returns
+        -------
+        current_coord: float
+            更新後のリール現在座標
+        """
+        # リール画像高さ
+        reel_height = GameData.REEL_HEIGHT
+
+        # 前回からの経過時間から現在座標を計算
+        current_coord += (reel_height / GameData.REEL_SPEED) * dt
+
+        # 現在座標がリール端を超えている場合、補正する
+        if current_coord >= reel_height:
+            current_coord %= reel_height
+
+        return current_coord
 
     @property
     def id(self) -> int:
@@ -243,9 +311,9 @@ class Reel:
         return self._target_symbol
 
     @property
-    def rotate_instruction(self) -> bool:
-        return self._rotate_instruction
+    def spinning(self) -> bool:
+        return self._spinning
 
     @property
-    def stop_instruction(self) -> bool:
-        return self._stop_instruction
+    def stop_request(self) -> bool:
+        return self._stop_request
