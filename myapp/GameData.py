@@ -1,9 +1,13 @@
 import os
 
+import pygame
+
 # ゲームデータフォルダ名
 GAMEDATA_FOLDER_NAME: str = "assets"
 # ゲーム画像フォルダ名
 IMAGE_FOLDER_NAME: str = "images"
+# ゲーム画像フォルダ名
+FONT_FOLDER_NAME: str = "fonts"
 
 # 現在のスクリプトファイルのディレクトリを取得
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -22,7 +26,14 @@ SCREEN_HEIGHT: int = 600
 GAME_TITLE: str = "test"
 
 # フォント
-FONT_WANPAKURUIKA = "わんぱくルイカ-０７"
+FONT_MPLUS1 = "わんぱくルイカ-０７"
+# フォントファイルのパス
+FONT_MPLUS1_FILE_PATH = os.path.join(
+    parent_dir,
+    GAMEDATA_FOLDER_NAME,
+    FONT_FOLDER_NAME,
+    "MPLUS1-ExtraBold.ttf",
+)
 # フレームレート指定
 FRAMERATE_LIMIT: int | None = None
 
@@ -31,7 +42,7 @@ SYMBOL_WIDTH: int = 150
 # 図柄画像高さ
 SYMBOL_HEIGHT: int = 70
 # リール図柄数
-REEL_SYMBOL_LENGTH: int = 21
+REEL_SYMBOL_LENGTH: int = 20
 # リール画像幅
 REEL_WIDTH: int = SYMBOL_WIDTH
 # リール画像高さ
@@ -72,25 +83,26 @@ BET_INTERVAL: float = (1 / 30) * 2
 # リールウェイト時間[sec]
 REELWAIT_TIME: float = 4.1
 
+
 # 色
-COLORS: dict[str, tuple[int, int, int]] = {
-    "WHITE": (255, 255, 255),
-    "BLACK": (0, 0, 0),
-    "SILVER": (192, 192, 192),
-    "GRAY": (128, 128, 128),
-    "RED": (255, 0, 0),
-    "MAROON": (128, 0, 0),
-    "YELLOW": (255, 255, 0),
-    "OLIVE": (128, 128, 0),
-    "LIME": (0, 255, 0),
-    "GREEN": (0, 128, 0),
-    "AQUA": (0, 255, 255),
-    "TEAL": (0, 128, 128),
-    "BLUE": (0, 0, 255),
-    "NAVY": (0, 0, 128),
-    "FUCHSIA": (255, 0, 255),
-    "PURPLE": (128, 0, 128),
-}
+class Color:
+    white: tuple[int, int, int] = (255, 255, 255)
+    black: tuple[int, int, int] = (0, 0, 0)
+    silver: tuple[int, int, int] = (192, 192, 192)
+    gray: tuple[int, int, int] = (128, 128, 128)
+    red: tuple[int, int, int] = (255, 0, 0)
+    maroon: tuple[int, int, int] = (128, 0, 0)
+    yellow: tuple[int, int, int] = (255, 255, 0)
+    olive: tuple[int, int, int] = (128, 128, 0)
+    lime: tuple[int, int, int] = (0, 255, 0)
+    green: tuple[int, int, int] = (0, 128, 0)
+    aqua: tuple[int, int, int] = (0, 255, 255)
+    teal: tuple[int, int, int] = (0, 128, 128)
+    blue: tuple[int, int, int] = (0, 0, 255)
+    navy: tuple[int, int, int] = (0, 0, 128)
+    fuchsia: tuple[int, int, int] = (255, 0, 255)
+    purple: tuple[int, int, int] = (128, 0, 128)
+
 
 # 有効BET数: 最小
 VALIDBET_MIN: int = 1
